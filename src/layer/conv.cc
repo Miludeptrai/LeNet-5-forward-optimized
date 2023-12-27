@@ -2,6 +2,8 @@
 #include <math.h>
 #include <iostream>
 
+int dem = 0;
+
 void Conv::init() {
   height_out = (1 + (height_in - height_kernel + 2 * pad_h) / stride);
   width_out =   (1 + (width_in - width_kernel + 2 * pad_w) / stride);
@@ -25,7 +27,7 @@ void Conv::im2col(const Vector& image, Matrix& data_col) {
   int hw_kernel = height_kernel * width_kernel;
   int hw_out = height_out * width_out;
   // im2col
-  data_col.resize(hw_out, hw_kernel * channel_in);
+  data_col.resize(hw_out, hw_kernel * channel_in); 
   for (int c = 0; c < channel_in; c ++) {
     Vector map = image.block(hw_in * c, 0, hw_in, 1);  // c-th channel map
     for (int i = 0; i < hw_out; i ++) {
@@ -50,6 +52,11 @@ void Conv::im2col(const Vector& image, Matrix& data_col) {
 }
 
 void Conv::forward(const Matrix& bottom) {
+  if (dem == 0) { 
+    printf("%ld %ld \n",bottom.rows(),bottom.cols());//784  128
+    printf("%ld %ld \n",bottom.col(0).rows(),bottom.col(0).cols());
+    dem = dem + 1 ;
+  }
   int n_sample = bottom.cols();
   top.resize(height_out * width_out * channel_out, n_sample);
   data_cols.resize(n_sample);
@@ -73,7 +80,7 @@ void Conv::col2im(const Matrix& data_col, Vector& image) {
   int hw_kernel = height_kernel * width_kernel;
   int hw_out = height_out * width_out;
   // col2im
-  image.resize(hw_in * channel_in);
+  image.resize(hw_in * channel_in); 
   image.setZero();
   for (int c = 0; c < channel_in; c ++) {
     for (int i = 0; i < hw_out; i ++) {

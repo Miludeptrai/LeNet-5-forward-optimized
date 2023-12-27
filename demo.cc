@@ -4,8 +4,28 @@
  * Details in https://github.com/iamhankai/mini-dnn-cpp
  * Copyright 2018 Kai Han
  */
+#include <Eigen/Dense>
+#include <algorithm>
+#include <iostream>
 
-#include "LeNet5/LeNet5.h"
+#include "src/layer.h"
+#include "src/layer/conv.h"
+#include "src/layer/fully_connected.h"
+#include "src/layer/ave_pooling.h"
+#include "src/layer/max_pooling.h"
+#include "src/layer/relu.h"
+#include "src/layer/sigmoid.h"
+#include "src/layer/softmax.h"
+#include "src/loss.h"
+#include "src/loss/mse_loss.h"
+#include "src/loss/cross_entropy_loss.h"
+#include "src/mnist.h"
+#include "src/network.h"
+#include "src/optimizer.h"
+#include "src/optimizer/sgd.h"
+
+
+#include "src/LeNet5/LeNet5.h"
 
 
 int main() {
@@ -14,10 +34,11 @@ int main() {
   dataset.read();
   int n_train = dataset.train_data.cols();
   int dim_in = dataset.train_data.rows();
+  std::cout << "mnist dim_in: " << dim_in << std::endl;
   std::cout << "mnist train number: " << n_train << std::endl;
   std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
   // dnn
-  Network dnn = LeNet5_CPU;
+  Network dnn = LeNet5_CPU();
 
   // train & test
   SGD opt(0.001, 5e-4, 0.9, true);
