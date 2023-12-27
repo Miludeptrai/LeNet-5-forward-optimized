@@ -67,6 +67,6 @@ public:
     void testing_unroll(float *output_data, const float *input_data, const float *weight_data,
                                 const int num_samples, const int output_channel, const int input_channel,
                                 const int height_in, const int width_in, const int kernel_height);
-}
+};
 
 #endif
