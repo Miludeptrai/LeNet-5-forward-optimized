@@ -3,20 +3,18 @@
 #include <iostream>
 
 
-float computeError(uchar3 * a1, uchar3 * a2, int n)
+float computeError(float * a1, float * a2, int n)
 {
 	float err = 0;
 	for (int i = 0; i < n; i++)
 	{
-		err += abs((int)a1[i].x - (int)a2[i].x);
-		err += abs((int)a1[i].y - (int)a2[i].y);
-		err += abs((int)a1[i].z - (int)a2[i].z);
+		err += abs((int)a1[i] - (int)a2[i]);
 	}
-	err /= (n * 3);
+	err /= (n);
 	return err;
 }
 
-void printError(uchar3 * deviceResult, uchar3 * hostResult, int width, int height)
+void printError(float * deviceResult, float * hostResult, int width, int height)
 {
 	float err = computeError(deviceResult, hostResult, width * height);
 	printf("Error: %f\n", err);
@@ -85,12 +83,13 @@ void ConvKernel::forward(const Matrix &bottom)
     int n_sample = bottom.cols();
     top.resize(height_out * width_out * channel_out, n_sample);
     float *input_data = (float *)bottom.data();
-    float *output_data = (float *)top.data();
+    float *output_data = (float *)malloc(height_out * width_out * channel_out * n_sample * sizeof(float));
     float *weight_data = (float *)weight.data();
     const int num_samples = n_sample;
     const int input_channel = channel_in;
     const int output_channel = channel_out;
     const int kernel_height = height_kernel; // Assuming width_kernel is also K
+
 
     Kernel kernel;
     std::cout << "Convolution - GPU:" << std::endl;
@@ -113,6 +112,19 @@ void ConvKernel::forward(const Matrix &bottom)
     // gpuInterface.insert_post_barrier_kernel();
 
     std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+
+    data_cols.resize(n_sample);
+    for (int i = 0; i < n_sample; i ++) {
+      // im2col
+      Matrix data_col;
+      im2col(bottom.col(i), data_col);
+      //data_cols[i] = data_col;
+      // conv by product
+      Matrix result = data_col * weight;  // result: (hw_out, channel_out)
+      result.rowwise() += bias.transpose();
+      top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
+    }
+    printError((float *)top.data(),input_data,height_out * width_out * channel_out,n_sample);
 }
 
 // col2im, used for grad_bottom
