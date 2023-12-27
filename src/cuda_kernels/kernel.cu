@@ -76,7 +76,7 @@ __host__ void Kernel::conv_forward_gpu_full(float *output_data, const float *inp
     const int width_out = width_in - kernel_height + 1;
 
     // Allocate device memory
-    this->printDeviceInfo();
+    //this->printDeviceInfo();
     float *device_input, *device_output, *device_weight;
     CHECK(cudaMalloc((void **)&device_input, num_samples * input_channel * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, num_samples * output_channel * height_out * width_out * sizeof(float)));

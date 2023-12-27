@@ -3,9 +3,9 @@
 Network LeNet5_CPU(){
     Network dnn;
     Layer* conv1 = new Conv(1, 28, 28, 6, 5, 5, 1, 0, 0);
-    Layer* pool1 = new MaxPooling(6, 24, 24, 2, 2, 2);
+    Layer* pool1 = new AvePooling(6, 24, 24, 2, 2, 2);
     Layer* conv2 = new Conv(6, 12, 12, 16, 5, 5, 1, 0, 0);
-    Layer* pool2 = new MaxPooling(16, 8, 8, 2, 2, 2);
+    Layer* pool2 = new AvePooling(16, 8, 8, 2, 2, 2);
     Layer* conv3 = new Conv(16, 4, 4, 120, 4, 4, 1, 0, 0);
     Layer* fc4 = new FullyConnected(conv3->output_dim(), 84);
     //Layer* fc4 = new FullyConnected(120, 84);

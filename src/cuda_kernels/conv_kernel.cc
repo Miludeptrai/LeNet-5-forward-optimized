@@ -75,11 +75,12 @@ void ConvKernel::im2col(const Vector &image, Matrix &data_col)
         }
     }
 }
-
+//####################################################################################################
 void ConvKernel::forward(const Matrix &bottom)
 {
     
     printf("%ld %ld \n",bottom.cols(),bottom.rows());
+    printf("%d \n",height_out * width_out * channel_out);
     int n_sample = bottom.cols();
     top.resize(height_out * width_out * channel_out, n_sample);
     float *input_data = (float *)bottom.data();
