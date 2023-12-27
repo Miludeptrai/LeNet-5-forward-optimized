@@ -1,12 +1,11 @@
 cmake_minimum_required (VERSION 3.0)
 project (myproject LANGUAGES CUDA C CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_language(CUDA)
 
 set(CUDA_ARCHITECTURES "75")
-set(
-    CUDA_NVCC_FLAGS
-    ${CUDA_NVCC_FLAGS} -fmad=false -arch=sm_75
-    )
+
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fmad=false")
 
 set(CUDA_SOURCES
     /src/LeNet5/LeNet5.cc

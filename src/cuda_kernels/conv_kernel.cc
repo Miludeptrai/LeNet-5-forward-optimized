@@ -18,6 +18,7 @@ void printError(float * deviceResult, float * hostResult, int width, int height)
 {
 	float err = computeError(deviceResult, hostResult, width * height);
 	printf("Error: %f\n", err);
+	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
 }
 
 
@@ -125,7 +126,7 @@ void ConvKernel::forward(const Matrix &bottom)
       result.rowwise() += bias.transpose();
       top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
     }
-    printError((float *)top.data(),input_data,height_out * width_out * channel_out,n_sample);
+    printError((float *)top.data(),output_data,height_out * width_out * channel_out,n_sample);
 }
 
 // col2im, used for grad_bottom
