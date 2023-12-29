@@ -3,7 +3,7 @@
 
 #include <vector>
 #include "../layer.h"
-#include "kernel.h"
+#include "kernel_testing.h"
 
 class ConvKernel_testing : public Layer
 {

@@ -1,4 +1,4 @@
-#include "conv_kernel.h"
+#include "conv_kernel_testing.h"
 #include <math.h>
 #include <iostream>
 

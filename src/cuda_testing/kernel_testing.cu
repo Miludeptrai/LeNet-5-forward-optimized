@@ -1,4 +1,4 @@
-#include "kernel.h"
+#include "kernel_testing.h"
 #define TILE_WIDTH 32
 
 
