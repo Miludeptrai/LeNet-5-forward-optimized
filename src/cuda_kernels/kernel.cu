@@ -73,25 +73,44 @@ __global__ void unroll_kernel(int channel_in, int height_in, int width_in, int h
                             int width_kernel, int height_out, int width_out, 
                             float* X, float* X_unroll)
 {
+    // int t = blockIdx.x * blockDim.x + threadIdx.x; //1
+    // int width_unroll = height_out * width_out; //2*2 
+    // if(t < channel_in*width_unroll)
+    // {
+    //     int c = t / width_unroll; //0 
+    //     int col_unroll = t % width_unroll;//1
+    //     int row_out = col_unroll / width_out;//0
+    //     int col_out = col_unroll % width_out;//1
+    //     int a0 = c*(width_in*height_in);//0
+    //     int w_base = c * width_kernel * height_kernel; //0
+    //     for (int p = 0; p < height_kernel; p++){ 
+    //         int a1 = ( row_out + p)*width_in; // 0
+    //         for(int q = 0; q < width_kernel; q++){
+    //             int a2 =  col_out + q; //1
+    //             int row_unroll = w_base + p * width_kernel + q; 
+    //             X_unroll[row_unroll*width_unroll + col_unroll] = X[a0 + a1 + a2];
+    //         }
+    //     }
+    // }
     int t = blockIdx.x * blockDim.x + threadIdx.x; //1
-    int width_unroll = height_out * width_out; //2*2 
-    if(t < channel_in*width_unroll)
-    {
-        int c = t / width_unroll; //0 
-        int col_unroll = t % width_unroll;//1
+    int height_unroll = height_out * width_out; //2*2 
+    if(t < channel_in*height_unroll)
+    {   
+        int c = t / height_unroll; //0 
+        int row_unroll = t % height_unroll;//1
 
-        int row_out = col_unroll / width_out;//0
-        int col_out = col_unroll % width_out;//1
+        int row_out = row_unroll / width_out;//0
+        int col_out = row_unroll % width_out;//1
 
         int a0 = c*(width_in*height_in);//0
 
-        int w_base = col_unroll * width_kernel * height_kernel * channel_in; //0
+        int w_base =  c * width_kernel * height_kernel; //0
         for (int p = 0; p < height_kernel; p++){ 
             int a1 = ( row_out + p)*width_in; // 0
             for(int q = 0; q < width_kernel; q++){
                 int a2 =  col_out + q; //1
-                int row_unroll = w_base + p * width_kernel + q; 
-                X_unroll[row_unroll*width_unroll + col_unroll] = X[a0 + a1 + a2];
+                int col_unroll =w_base + p * width_kernel + q; //+ 
+                X_unroll[row_unroll*channel_in*width_kernel * height_kernel + col_unroll] = X[a0 + a1 + a2];
             }
         }
     }
