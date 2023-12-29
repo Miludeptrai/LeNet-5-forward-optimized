@@ -2,7 +2,7 @@
 #define TILE_WIDTH 32
 
 
-char *Kernel::concatStr(const char *s1, const char *s2)
+char *Kernel_testing::concatStr(const char *s1, const char *s2)
 {
     char *result = (char *)malloc(strlen(s1) + strlen(s2) + 1);
     strcpy(result, s1);
@@ -10,7 +10,7 @@ char *Kernel::concatStr(const char *s1, const char *s2)
     return result;
 }
 
-void Kernel::printDeviceInfo()
+void Kernel_testing::printDeviceInfo()
 {
     cudaDeviceProp devProv;
     CHECK(cudaGetDeviceProperties(&devProv, 0));
@@ -129,8 +129,16 @@ __global__ void unroll_kernel(int channel_in, int height_in, int width_in, int h
 }
 __global__ void matrix_multiplication_kernel2(float* A, float* B, float* C, int m, int n, int k)
 {
+// 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
+// 	int r = blockIdx.y * blockDim.y + threadIdx.y; 
+// 	if (r < m && c < k) {
+//     float sum = 0 ;
+//     for (int i = 0; i < n ; i++) { 
+//       sum += A[i*m + r] * B[c*n + i];
+//     }
+//     C[c*m + r] = sum ; 
 
-
+//   } 
   	__shared__ float s_A[TILE_WIDTH][TILE_WIDTH];
 	__shared__ float s_B[TILE_WIDTH][TILE_WIDTH];
 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
@@ -146,17 +154,19 @@ __global__ void matrix_multiplication_kernel2(float* A, float* B, float* C, int 
         else
             s_B[threadIdx.y][threadIdx.x] = 0;
         __syncthreads();
+        
 		if (r<m && c<k){
             for(int j = 0; j < TILE_WIDTH; ++j)
                 sum += s_A[threadIdx.y][j] * s_B[j][threadIdx.x];
-            __syncthreads();
         }
+        
+            __syncthreads();
 	}
     if (r<m && c<k)
-        C[c * n + r] = sum; 
+        C[c * m + r] = sum; 
 }
 
-__host__ void Kernel::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
+__host__ void Kernel_testing::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
                                             const int num_samples, const int output_channel, const int input_channel,
                                             const int height_in, const int width_in, const int kernel_height)
 {
@@ -195,7 +205,7 @@ __host__ void Kernel::conv_forward_gpu_full(float *output_data, const float *inp
     CHECK(cudaFree(device_weight));
 }
 
-__host__ void Kernel::testing_unroll(int channel_in, int height_in, int width_in, int height_kernel, 
+__host__ void Kernel_testing::testing_unroll(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
                             float* X, float* X_unroll)
 {
@@ -227,7 +237,7 @@ __host__ void Kernel::testing_unroll(int channel_in, int height_in, int width_in
 }
 
 
-__host__ void Kernel::testing_matrix_multiplication(float* A, float* B, float* C, int m, int n, int k,
+__host__ void Kernel_testing::testing_matrix_multiplication(float* A, float* B, float* C, int m, int n, int k,
                          dim3 blockSize )
 {
     // Allocate device memory

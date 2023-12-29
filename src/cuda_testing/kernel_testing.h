@@ -55,7 +55,7 @@ struct GpuTimer
     }
 };
 
-class Kernel
+class Kernel_testing
 {
 public:
     char *concatStr(const char *s1, const char *s2);

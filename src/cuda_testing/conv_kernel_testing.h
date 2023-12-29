@@ -5,7 +5,7 @@
 #include "../layer.h"
 #include "kernel.h"
 
-class ConvKernel : public Layer
+class ConvKernel_testing : public Layer
 {
 private:
     const int dim_in;

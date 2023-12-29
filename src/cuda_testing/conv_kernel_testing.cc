@@ -23,7 +23,7 @@ void printError(float * deviceResult, float * hostResult, int width, int height)
 
 
 
-void ConvKernel::init()
+void ConvKernel_testing::init()
 {
     height_out = (1 + (height_in - height_kernel + 2 * pad_h) / stride);
     width_out = (1 + (width_in - width_kernel + 2 * pad_w) / stride);
@@ -42,7 +42,7 @@ void ConvKernel::init()
 // im2col, used for bottom
 // image size: Vector (height_in * width_in * channel_in)
 // data_col size: Matrix (hw_out, hw_kernel * channel_in)
-void ConvKernel::im2col(const Vector &image, Matrix &data_col)
+void ConvKernel_testing::im2col(const Vector &image, Matrix &data_col)
 {
     int hw_in = height_in * width_in;
     int hw_kernel = height_kernel * width_kernel;
@@ -77,7 +77,7 @@ void ConvKernel::im2col(const Vector &image, Matrix &data_col)
     }
 }
 //####################################################################################################
-void ConvKernel::forward(const Matrix &bottom)
+void ConvKernel_testing::forward(const Matrix &bottom)
 {
     
     printf("%ld %ld \n",bottom.cols(),bottom.rows());
@@ -117,7 +117,8 @@ void ConvKernel::forward(const Matrix &bottom)
 
 
     ////////////////////////// test unroll pass 
-    // data_cols.resize(n_sample);
+    printf("Start testing \n");
+    data_cols.resize(n_sample);
     for (int i = 0; i < n_sample; i ++) {
       
     //   float *input_data = (float *)bottom.col(i).data();
@@ -163,6 +164,8 @@ void ConvKernel::forward(const Matrix &bottom)
         float *input_data2 = (float *)weight.data();
        float *output_data = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
     timer.Start();
+    
+    printf("Start kernal \n");
       kernel.testing_matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
       
     timer.Stop();
@@ -188,7 +191,7 @@ void ConvKernel::forward(const Matrix &bottom)
 // col2im, used for grad_bottom
 // data_col size: Matrix (hw_out, hw_kernel * channel_in)
 // image size: Vector (height_in * width_in * channel_in)
-void ConvKernel::col2im(const Matrix &data_col, Vector &image)
+void ConvKernel_testing::col2im(const Matrix &data_col, Vector &image)
 {
     int hw_in = height_in * width_in;
     int hw_kernel = height_kernel * width_kernel;
@@ -223,7 +226,7 @@ void ConvKernel::col2im(const Matrix &data_col, Vector &image)
     }
 }
 
-void ConvKernel::backward(const Matrix &bottom, const Matrix &grad_top)
+void ConvKernel_testing::backward(const Matrix &bottom, const Matrix &grad_top)
 {
     int n_sample = bottom.cols();
     grad_weight.setZero();
@@ -249,7 +252,7 @@ void ConvKernel::backward(const Matrix &bottom, const Matrix &grad_top)
     }
 }
 
-void ConvKernel::update(Optimizer &opt)
+void ConvKernel_testing::update(Optimizer &opt)
 {
     Vector::AlignedMapType weight_vec(weight.data(), weight.size());
     Vector::AlignedMapType bias_vec(bias.data(), bias.size());
@@ -260,7 +263,7 @@ void ConvKernel::update(Optimizer &opt)
     opt.update(bias_vec, grad_bias_vec);
 }
 
-std::vector<float> ConvKernel::get_parameters() const
+std::vector<float> ConvKernel_testing::get_parameters() const
 {
     std::vector<float> res(weight.size() + bias.size());
     // Copy the data of weights and bias to a long vector
@@ -269,7 +272,7 @@ std::vector<float> ConvKernel::get_parameters() const
     return res;
 }
 
-void ConvKernel::set_parameters(const std::vector<float> &param)
+void ConvKernel_testing::set_parameters(const std::vector<float> &param)
 {
     if (static_cast<int>(param.size()) != weight.size() + bias.size())
         throw std::invalid_argument("Parameter size does not match");
@@ -277,7 +280,7 @@ void ConvKernel::set_parameters(const std::vector<float> &param)
     std::copy(param.begin() + weight.size(), param.end(), bias.data());
 }
 
-std::vector<float> ConvKernel::get_derivatives() const
+std::vector<float> ConvKernel_testing::get_derivatives() const
 {
     std::vector<float> res(grad_weight.size() + grad_bias.size());
     // Copy the data of weights and bias to a long vector

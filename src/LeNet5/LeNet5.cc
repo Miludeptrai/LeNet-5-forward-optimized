@@ -38,13 +38,13 @@ Network LeNet5_CPU(){
 
 
 
-Network LeNet5_CUDA_NONE_OPTIMIZE(){
+Network LeNet5_CUDA_TESTING(){
     Network dnn;
-    Layer* conv1 = new ConvKernel(1, 28, 28, 6, 5, 5, 1, 0, 0);
+    Layer* conv1 = new ConvKernel_testing(1, 28, 28, 6, 5, 5, 1, 0, 0);
     Layer* pool1 = new AvePooling(6, 24, 24, 2, 2, 2);
-    Layer* conv2 = new ConvKernel(6, 12, 12, 16, 5, 5, 1, 0, 0);
+    Layer* conv2 = new ConvKernel_testing(6, 12, 12, 16, 5, 5, 1, 0, 0);
     Layer* pool2 = new AvePooling(16, 8, 8, 2, 2, 2);
-    Layer* conv3 = new ConvKernel(16, 4, 4, 120, 4, 4, 1, 0, 0);
+    Layer* conv3 = new ConvKernel_testing(16, 4, 4, 120, 4, 4, 1, 0, 0);
     Layer* fc4 = new FullyConnected(conv3->output_dim(), 84);
     //Layer* fc4 = new FullyConnected(120, 84);
     Layer* fc5 = new FullyConnected(84, 10);

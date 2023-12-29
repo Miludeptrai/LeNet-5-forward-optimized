@@ -10,7 +10,7 @@
 
 #include "../layer.h"
 #include "../layer/conv.h"
-#include "../cuda_kernels/conv_kernel.h"
+#include "../cuda_testing/kernel_testing.h"
 
 #include "../layer/fully_connected.h"
 #include "../layer/ave_pooling.h"
@@ -27,5 +27,6 @@
 #include "../optimizer/sgd.h"
 
 Network LeNet5_CPU();
-Network LeNet5_CUDA_NONE_OPTIMIZE();
+Network LeNet5_CUDA_TESTING();
+//Network LeNet5_CUDA_NONE_OPTIMIZE();
 // Network LeNet5_CUDA_OPTIMIZED();
