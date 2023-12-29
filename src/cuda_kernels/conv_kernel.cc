@@ -116,46 +116,60 @@ void ConvKernel::forward(const Matrix &bottom)
     // std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
 
 
-    
-    data_cols.resize(n_sample);
-    for (int i = 0; i < n_sample; i ++) {
+    ////////////////////////// test unroll pass 
+    // data_cols.resize(n_sample);
+    // for (int i = 0; i < n_sample; i ++) {
       
-      float *input_data = (float *)bottom.col(i).data();
-      float *output_data = (float *)malloc(height_out * width_out * height_kernel * width_kernel * channel_in * sizeof(float));
+    //   float *input_data = (float *)bottom.col(i).data();
+    //   float *output_data = (float *)malloc(height_out * width_out * height_kernel * width_kernel * channel_in * sizeof(float));
 
-      Kernel kernel;
-      std::cout << "Convolution - GPU:" << std::endl;
+    //   Kernel kernel;
+    //   std::cout << "Convolution - GPU:" << std::endl;
 
-      // Launch marker kernel to aid with student function timing
-      // gpuInterface.insert_pre_barrier_kernel();
+    //   // Launch marker kernel to aid with student function timing
+    //   // gpuInterface.insert_pre_barrier_kernel();
 
-      // Start layer timer
-      GpuTimer timer;
-      timer.Start();
-      kernel.testing_unroll(channel_in, height_in, width_in, height_kernel, 
-                              width_kernel,  height_out,  width_out, 
-                              input_data, output_data);
+    //   // Start layer timer
+    //   GpuTimer timer;
+    //   timer.Start();
+    //   kernel.testing_unroll(channel_in, height_in, width_in, height_kernel, 
+    //                           width_kernel,  height_out,  width_out, 
+    //                           input_data, output_data);
 
-      // Stop layer timer
-      timer.Stop();
-      float duration_layer = timer.Elapsed();
+    //   // Stop layer timer
+    //   timer.Stop();
+    //   float duration_layer = timer.Elapsed();
 
-      // Launch barrier kernel to aid with timing with nsight-compute
-      // gpuInterface.insert_post_barrier_kernel();
+    //   // Launch barrier kernel to aid with timing with nsight-compute
+    //   // gpuInterface.insert_post_barrier_kernel();
 
-      std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
-
-
+    //   std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
 
 
 
-      
-    timer.Start();
+
+
       // im2col
       Matrix data_col;
       im2col(bottom.col(i), data_col);
       //data_cols[i] = data_col;
       // conv by product
+      /////////////////////////////////////// test multiplication 
+
+      
+    Kernel kernel;
+        dim3 blockSize(32, 32);
+        float *input_data1 = (float *)data_col.data();
+        float *input_data2 = (float *)weight.data();
+       float *output_data = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
+    timer.Start();
+      kernel.matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
+      
+    timer.Stop();
+    duration_layer = timer.Elapsed();
+    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+      
+    timer.Start();
       Matrix result = data_col * weight;  // result: (hw_out, channel_out)
       result.rowwise() += bias.transpose();
       top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
@@ -165,7 +179,7 @@ void ConvKernel::forward(const Matrix &bottom)
     
     std::cout << "\t - CPU Layer Time: " << duration_layer << " ms" << std::endl;
     
-    printError((float *)data_col.data(),output_data,height_out * width_out * height_kernel * width_kernel * channel_in,1);
+    printError((float *)result.data(),output_data,height_out * width_out * channel_out,1);
     }
     
 
