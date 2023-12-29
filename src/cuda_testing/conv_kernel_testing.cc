@@ -158,7 +158,7 @@ void ConvKernel_testing::forward(const Matrix &bottom)
       /////////////////////////////////////// test multiplication 
 
       
-    Kernel kernel;
+    Kernel_testing kernel_testing;
         dim3 blockSize(32, 32);
         float *input_data1 = (float *)data_col.data();
         float *input_data2 = (float *)weight.data();
@@ -166,7 +166,7 @@ void ConvKernel_testing::forward(const Matrix &bottom)
     timer.Start();
     
     printf("Start kernal \n");
-      kernel.testing_matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
+      kernel_testing.testing_matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
       
     timer.Stop();
     float duration_layer = timer.Elapsed();
