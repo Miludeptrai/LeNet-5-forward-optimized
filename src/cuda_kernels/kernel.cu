@@ -69,25 +69,28 @@ __global__ void conv_forward_kernel(float *output, const float *input, const flo
 }
 
 
-_global_ void unroll_kernel(int channel_in, int height_in, int width_in, int height_kernel, 
+__global__ void unroll_kernel(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
                             float* X, float* X_unroll)
 {
-    int t = blockIdx.x * blockDim.x + threadIdx.x;
-    int width_unroll = height_out * weight_out;
+    int t = blockIdx.x * blockDim.x + threadIdx.x; //1
+    int width_unroll = height_out * width_out; //2*2 
     if(t < channel_in*width_unroll)
     {
-        int c = t / width_unroll;
-        int col_unroll = t/width_unroll;
-        int row_out = col_unroll / width_out;
-        int col_out = col_unroll % width_out;
-        int a0 = c*(width_in*height_in);
-        int w_base = c * width_kernel * height_kernel;
-        for (int p = 0; p < height_kernel; p++){
-            int a1 = (row_out + p)*width_in;
+        int c = t / width_unroll; //0 
+        int col_unroll = t % width_unroll;//1
+
+        int row_out = col_unroll / width_out;//0
+        int col_out = col_unroll % width_out;//1
+
+        int a0 = c*(width_in*height_in);//0
+
+        int w_base = col_unroll * width_kernel * height_kernel * channel_in; //0
+        for (int p = 0; p < height_kernel; p++){ 
+            int a1 = ( row_out + p)*width_in; // 0
             for(int q = 0; q < width_kernel; q++){
-                int a2 = col_out + q;
-                int row_unroll = w_base + p * width_kernel + q;
+                int a2 =  col_out + q; //1
+                int row_unroll = w_base + p * width_kernel + q; 
                 X_unroll[row_unroll*width_unroll + col_unroll] = X[a0 + a1 + a2];
             }
         }
@@ -154,7 +157,7 @@ __host__ void Kernel::testing_unroll(int channel_in, int height_in, int width_in
     // Launch the kernel
     unroll_kernel<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
-                            device_input,  device_output)
+                            device_input,  device_output);
     CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host

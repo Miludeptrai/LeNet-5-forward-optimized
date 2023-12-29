@@ -164,8 +164,8 @@ void ConvKernel::forward(const Matrix &bottom)
     duration_layer = timer.Elapsed();
     
     std::cout << "\t - CPU Layer Time: " << duration_layer << " ms" << std::endl;
-
-    printError((float *)data_col.data(),height_out * width_out * height_kernel * width_kernel * channel_in);
+    
+    printError((float *)data_col.data(),output_data,height_out * width_out * height_kernel * width_kernel * channel_in,1);
     }
     
 
