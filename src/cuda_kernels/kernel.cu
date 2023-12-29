@@ -1,5 +1,6 @@
 #include "kernel.h"
-#define TILE_WIDTH 16
+#define TILE_WIDTH 32
+
 
 char *Kernel::concatStr(const char *s1, const char *s2)
 {
@@ -128,18 +129,20 @@ __global__ void unroll_kernel(int channel_in, int height_in, int width_in, int h
 }
 __global__ void matrix_multiplication_kernel2(float* A, float* B, float* C, int m, int n, int k)
 {
-	__shared__ float s_A[TILE_WIDTH][TILE_WIDTH];
+
+
+  	__shared__ float s_A[TILE_WIDTH][TILE_WIDTH];
 	__shared__ float s_B[TILE_WIDTH][TILE_WIDTH];
 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
 	int r = blockIdx.y * blockDim.y + threadIdx.y; 
 	float sum = 0 ;
 	for(int b = 0 ; b < (n-1)/TILE_WIDTH + 1 ; b++){
         if (r<m && b*TILE_WIDTH+threadIdx.x<n)
-            s_A[threadIdx.y][threadIdx.x] = A[r*n + b*TILE_WIDTH+threadIdx.x];
+            s_A[threadIdx.y][threadIdx.x] = A[r + (b*TILE_WIDTH+threadIdx.x)*m];
         else
             s_A[threadIdx.y][threadIdx.x] = 0;
         if (b*TILE_WIDTH+threadIdx.y<n && c < k)
-            s_B[threadIdx.y][threadIdx.x] = B[(b*TILE_WIDTH + threadIdx.y)*k + c];
+            s_B[threadIdx.y][threadIdx.x] = B[(b*TILE_WIDTH + threadIdx.y) + c*n];
         else
             s_B[threadIdx.y][threadIdx.x] = 0;
         __syncthreads();
@@ -150,7 +153,7 @@ __global__ void matrix_multiplication_kernel2(float* A, float* B, float* C, int 
         }
 	}
     if (r<m && c<k)
-        C[r * k + c] = sum; 
+        C[c * n + r] = sum; 
 }
 
 __host__ void Kernel::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
@@ -225,7 +228,7 @@ __host__ void Kernel::testing_unroll(int channel_in, int height_in, int width_in
 
 
 __host__ void Kernel::testing_matrix_multiplication(float* A, float* B, float* C, int m, int n, int k,
-                         dim3 blockSize = dim3(1))
+                         dim3 blockSize )
 {
     // Allocate device memory
     //this->printDeviceInfo();
@@ -240,9 +243,6 @@ __host__ void Kernel::testing_matrix_multiplication(float* A, float* B, float* C
     
     dim3 gridSize((k-1)/blockSize.y + 1,(m-1)/blockSize.x + 1,1); // TODO: Compute gridSize
     
-    if (kernelType == 1)
-        matrix_multiplication_kernel1<<<gridSize, blockSize>>>(d_A, d_B, d_C, m, n, k);
-    else if (kernelType == 2)
         matrix_multiplication_kernel2<<<gridSize, blockSize>>>(d_A, d_B, d_C, m, n, k);
 
     // TODO: Copy result from device memory

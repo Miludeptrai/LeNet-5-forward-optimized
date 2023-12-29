@@ -118,7 +118,7 @@ void ConvKernel::forward(const Matrix &bottom)
 
     ////////////////////////// test unroll pass 
     // data_cols.resize(n_sample);
-    // for (int i = 0; i < n_sample; i ++) {
+    for (int i = 0; i < n_sample; i ++) {
       
     //   float *input_data = (float *)bottom.col(i).data();
     //   float *output_data = (float *)malloc(height_out * width_out * height_kernel * width_kernel * channel_in * sizeof(float));
@@ -130,7 +130,7 @@ void ConvKernel::forward(const Matrix &bottom)
     //   // gpuInterface.insert_pre_barrier_kernel();
 
     //   // Start layer timer
-    //   GpuTimer timer;
+       GpuTimer timer;
     //   timer.Start();
     //   kernel.testing_unroll(channel_in, height_in, width_in, height_kernel, 
     //                           width_kernel,  height_out,  width_out, 
@@ -163,14 +163,15 @@ void ConvKernel::forward(const Matrix &bottom)
         float *input_data2 = (float *)weight.data();
        float *output_data = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
     timer.Start();
-      kernel.matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
+      kernel.testing_matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
       
     timer.Stop();
-    duration_layer = timer.Elapsed();
+    float duration_layer = timer.Elapsed();
     std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
       
     timer.Start();
       Matrix result = data_col * weight;  // result: (hw_out, channel_out)
+    printError((float *)result.data(),output_data,height_out * width_out * channel_out,1);
       result.rowwise() += bias.transpose();
       top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
       
@@ -179,7 +180,6 @@ void ConvKernel::forward(const Matrix &bottom)
     
     std::cout << "\t - CPU Layer Time: " << duration_layer << " ms" << std::endl;
     
-    printError((float *)result.data(),output_data,height_out * width_out * channel_out,1);
     }
     
 
