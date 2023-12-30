@@ -21,6 +21,10 @@ void ConvKernel_simple::forward(const Matrix &bottom)
 
     printf("%ld %ld \n",bottom.cols(),bottom.rows());
     printf("%d \n",height_out * width_out * channel_out);
+    
+    GpuTimer timer;
+    std::cout << "Convolution - CPU:" << std::endl;
+    timer.Start();
     data_cols.resize(n_sample);
     for (int i = 0; i < n_sample; i ++) {
         // im2col
@@ -32,24 +36,26 @@ void ConvKernel_simple::forward(const Matrix &bottom)
         //result.rowwise() += bias.transpose();
         top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
     }
-
+    
+    timer.Stop();
+    float duration_layer = timer.Elapsed();
+    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
     
     Kernel_simple kernel;
     std::cout << "Convolution - GPU:" << std::endl;
+    timer.Start();
 
     // Launch marker kernel to aid with student function timing
     // gpuInterface.insert_pre_barrier_kernel();
 
     // Start layer timer
-    GpuTimer timer;
-    timer.Start();
     kernel.conv_forward_gpu_full(output_data, input_data, weight_data,
                                  num_samples, output_channel, input_channel,
                                  height_in, width_in, kernel_height);
 
     // Stop layer timer
     timer.Stop();
-    float duration_layer = timer.Elapsed();
+     duration_layer = timer.Elapsed();
 
     
     printError((float *)top.data(),output_data,height_out * width_out * channel_out *n_sample,1);

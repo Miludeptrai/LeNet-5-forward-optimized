@@ -63,41 +63,41 @@ __global__ void unroll_kernel(int channel_in, int height_in, int width_in, int h
 }
 __global__ void matrix_multiplication_kernel2(float* A, float* B, float* C, int m, int n, int k)
 {
-// 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
-// 	int r = blockIdx.y * blockDim.y + threadIdx.y; 
-// 	if (r < m && c < k) {
-//     float sum = 0 ;
-//     for (int i = 0; i < n ; i++) { 
-//       sum += A[i*m + r] * B[c*n + i];
-//     }
-//     C[c*m + r] = sum ; 
-
-//   } 
-  	__shared__ float s_A[TILE_WIDTH][TILE_WIDTH];
-	__shared__ float s_B[TILE_WIDTH][TILE_WIDTH];
 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
 	int r = blockIdx.y * blockDim.y + threadIdx.y; 
-	float sum = 0 ;
-	for(int b = 0 ; b < (n-1)/TILE_WIDTH + 1 ; b++){
-        if (r<m && b*TILE_WIDTH+threadIdx.x<n)
-            s_A[threadIdx.y][threadIdx.x] = A[r + (b*TILE_WIDTH+threadIdx.x)*m];
-        else
-            s_A[threadIdx.y][threadIdx.x] = 0;
-        if (b*TILE_WIDTH+threadIdx.y<n && c < k)
-            s_B[threadIdx.y][threadIdx.x] = B[(b*TILE_WIDTH + threadIdx.y) + c*n];
-        else
-            s_B[threadIdx.y][threadIdx.x] = 0;
-        __syncthreads();
+	if (r < m && c < k) {
+    float sum = 0 ;
+    for (int i = 0; i < n ; i++) { 
+      sum += A[i*m + r] * B[c*n + i];
+    }
+    C[c*m + r] = sum ; 
+
+  } 
+  	// __shared__ float s_A[TILE_WIDTH][TILE_WIDTH];
+	// __shared__ float s_B[TILE_WIDTH][TILE_WIDTH];
+	// int c = blockIdx.x * blockDim.x + threadIdx.x; 
+	// int r = blockIdx.y * blockDim.y + threadIdx.y; 
+	// float sum = 0 ;
+	// for(int b = 0 ; b < (n-1)/TILE_WIDTH + 1 ; b++){
+    //     if (r<m && b*TILE_WIDTH+threadIdx.x<n)
+    //         s_A[threadIdx.y][threadIdx.x] = A[r + (b*TILE_WIDTH+threadIdx.x)*m];
+    //     else
+    //         s_A[threadIdx.y][threadIdx.x] = 0;
+    //     if (b*TILE_WIDTH+threadIdx.y<n && c < k)
+    //         s_B[threadIdx.y][threadIdx.x] = B[(b*TILE_WIDTH + threadIdx.y) + c*n];
+    //     else
+    //         s_B[threadIdx.y][threadIdx.x] = 0;
+    //     __syncthreads();
         
-		if (r<m && c<k){
-            for(int j = 0; j < TILE_WIDTH; ++j)
-                sum += s_A[threadIdx.y][j] * s_B[j][threadIdx.x];
-        }
+	// 	if (r<m && c<k){
+    //         for(int j = 0; j < TILE_WIDTH; ++j)
+    //             sum += s_A[threadIdx.y][j] * s_B[j][threadIdx.x];
+    //     }
         
-            __syncthreads();
-	}
-    if (r<m && c<k)
-        C[c * m + r] = sum; 
+    //         __syncthreads();
+	// }
+    // if (r<m && c<k)
+    //     C[c * m + r] = sum; 
 }
 
 __host__ void Kernel_testing::testing_unroll(int channel_in, int height_in, int width_in, int height_kernel, 

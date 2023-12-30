@@ -45,25 +45,28 @@ void ConvKernel_testing::forward(const Matrix &bottom)
 
 
     ////////////////////////// test unroll pass 
-    printf("Start testing \n");
+    // printf("Start testing \n");
+    
+       GpuTimer timer;
+       timer.Start();
     data_cols.resize(n_sample);
     for (int i = 0; i < n_sample; i ++) {
       
     //   float *input_data = (float *)bottom.col(i).data();
     //   float *output_data = (float *)malloc(height_out * width_out * height_kernel * width_kernel * channel_in * sizeof(float));
 
-    //   Kernel kernel;
+      Kernel_testing kernel_testing;
     //   std::cout << "Convolution - GPU:" << std::endl;
 
     //   // Launch marker kernel to aid with student function timing
     //   // gpuInterface.insert_pre_barrier_kernel();
 
     //   // Start layer timer
-       GpuTimer timer;
-    //   timer.Start();
-    //   kernel.testing_unroll(channel_in, height_in, width_in, height_kernel, 
-    //                           width_kernel,  height_out,  width_out, 
-    //                           input_data, output_data);
+    Matrix data_col;
+    data_col.resize(height_out*width_out, height_kernel*width_kernel * channel_in); 
+      kernel.testing_unroll(channel_in, height_in, width_in, height_kernel, 
+                             width_kernel,  height_out,  width_out, 
+                             bottom.col(i).data(), data_col.data());
 
     //   // Stop layer timer
     //   timer.Stop();
@@ -78,40 +81,48 @@ void ConvKernel_testing::forward(const Matrix &bottom)
 
 
 
-      // im2col
-      Matrix data_col;
-      im2col(bottom.col(i), data_col);
-      //data_cols[i] = data_col;
-      // conv by product
-      /////////////////////////////////////// test multiplication 
+    //   // im2col
+    //   Matrix data_col;
+    //   im2col(bottom.col(i), data_col);
+    //   //data_cols[i] = data_col;
+    //   // conv by product
+    //   /////////////////////////////////////// test multiplication 
 
       
-    Kernel_testing kernel_testing;
-        dim3 blockSize(32, 32);
-        float *input_data1 = (float *)data_col.data();
-        float *input_data2 = (float *)weight.data();
-       float *output_data = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
-    timer.Start();
+    // Kernel_testing kernel_testing;
+         dim3 blockSize(32, 32);
+    //     float *input_data1 = (float *)data_col.data();
+    //     float *input_data2 = (float *)weight.data();
+    //    float *output_data = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
+    // timer.Start();
     
-    printf("Start kernal \n");
-      kernel_testing.testing_matrix_multiplication(input_data1, input_data2, output_data, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
-      
-    timer.Stop();
-    float duration_layer = timer.Elapsed();
-    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
-      
-    timer.Start();
-      Matrix result = data_col * weight;  // result: (hw_out, channel_out)
-    printError((float *)result.data(),output_data,height_out * width_out * channel_out,1);
-      result.rowwise() += bias.transpose();
-      top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
-      
-    timer.Stop();
-    duration_layer = timer.Elapsed();
+    // printf("Start kernal \n");
+    Matrix result;
+    result.resize(height_out*width_out, channel_out); 
     
-    std::cout << "\t - CPU Layer Time: " << duration_layer << " ms" << std::endl;
+       kernel_testing.testing_matrix_multiplication(data_col.data(), weight.data(), result.data(), height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
+      
+    // timer.Stop();
+    // float duration_layer = timer.Elapsed();
+    // std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+      
+    // timer.Start();
+    //   Matrix result = data_col * weight;  // result: (hw_out, channel_out)
+    // printError((float *)result.data(),output_data,height_out * width_out * channel_out,1);
+    //   result.rowwise() += bias.transpose();
+    //   top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
+      
+    // timer.Stop();
+    // duration_layer = timer.Elapsed();
+    
+    // std::cout << "\t - CPU Layer Time: " << duration_layer << " ms" << std::endl;
     
     }
+    
+    timer.Stop();
+    float duration_layer = timer.Elapsed();
+    
+     std::cout << "\t - GPU Layer Time: " << duration_layer << " ms" << std::endl;
     
 
 }
