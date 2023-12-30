@@ -7,7 +7,7 @@
 #include <cuda_runtime.h>
 
 
-#include "../cuda_conv/cuda_kernel.h"
+#include "../cuda_kernel.h"
 
 class Kernel_testing : public Kernel
 {

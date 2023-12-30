@@ -3,10 +3,10 @@
 #pragma once
 
 #include <vector>
-#include "../layer.h"
+#include "../../layer.h"
 #include "kernel_testing.h"
 
-#include "../cuda_conv/cuda_conv_base.h"
+#include "../cuda_conv_base.h"
 
 class ConvKernel_testing : public ConvKernel
 {

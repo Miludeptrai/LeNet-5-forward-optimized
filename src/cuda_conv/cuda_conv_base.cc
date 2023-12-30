@@ -3,6 +3,10 @@
 #include <iostream>
 
 
+
+
+
+
 void ConvKernel::init()
 {
     height_out = (1 + (height_in - height_kernel + 2 * pad_h) / stride);
