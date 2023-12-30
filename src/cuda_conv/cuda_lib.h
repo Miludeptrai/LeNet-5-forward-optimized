@@ -1,10 +1,8 @@
-#ifndef CONV_GPU_H
-#define CONV_GPU_H
-#pragma once
+#ifndef SRC_CUDA_LIB_H_
+#define SRC_CUDA_LIB_H_
 
-#include <stdio.h>
-#include <stdint.h>
-#include <cuda_runtime.h>
+#include <vector>
+
 
 #define CHECK(call)                                                \
     {                                                              \
@@ -55,14 +53,23 @@ struct GpuTimer
     }
 };
 
-class Kernel_simple
-{
-public:
-    char *concatStr(const char *s1, const char *s2);
-    void printDeviceInfo();
-    void conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
-                               const int num_samples, const int output_channel, const int input_channel,
-                               const int height_in, const int width_in, const int kernel_height);
-};
 
-#endif
+float computeError(float * a1, float * a2, int n)
+{
+	float err = 0;
+	for (int i = 0; i < n; i++)
+	{
+		err += abs((int)a1[i] - (int)a2[i]);
+	}
+	err /= (n);
+	return err;
+}
+
+void printError(float * deviceResult, float * hostResult, int width, int height)
+{
+	float err = computeError(deviceResult, hostResult, width * height);
+	printf("Error: %f\n", err);
+	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
+}
+
+#endif 

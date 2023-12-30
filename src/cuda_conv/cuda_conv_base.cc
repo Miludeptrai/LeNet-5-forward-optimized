@@ -1,8 +1,29 @@
-#include "conv_kernel_simple.h"
+#include "conv_kernel_base.h"
 #include <math.h>
 #include <iostream>
 
-void ConvKernel_simple::init()
+
+float computeError(float * a1, float * a2, int n)
+{
+	float err = 0;
+	for (int i = 0; i < n; i++)
+	{
+		err += abs((int)a1[i] - (int)a2[i]);
+	}
+	err /= (n);
+	return err;
+}
+
+void printError(float * deviceResult, float * hostResult, int width, int height)
+{
+	float err = computeError(deviceResult, hostResult, width * height);
+	printf("Error: %f\n", err);
+	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
+}
+
+
+
+void ConvKernel::init()
 {
     height_out = (1 + (height_in - height_kernel + 2 * pad_h) / stride);
     width_out = (1 + (width_in - width_kernel + 2 * pad_w) / stride);
@@ -21,7 +42,7 @@ void ConvKernel_simple::init()
 // im2col, used for bottom
 // image size: Vector (height_in * width_in * channel_in)
 // data_col size: Matrix (hw_out, hw_kernel * channel_in)
-void ConvKernel_simple::im2col(const Vector &image, Matrix &data_col)
+void ConvKernel::im2col(const Vector &image, Matrix &data_col)
 {
     int hw_in = height_in * width_in;
     int hw_kernel = height_kernel * width_kernel;
@@ -56,46 +77,11 @@ void ConvKernel_simple::im2col(const Vector &image, Matrix &data_col)
     }
 }
 
-void ConvKernel_simple::forward(const Matrix &bottom)
-{
-    int n_sample = bottom.cols();
-    top.resize(height_out * width_out * channel_out, n_sample);
-    float *input_data = (float *)bottom.data();
-    float *output_data = (float *)top.data();
-    float *weight_data = (float *)weight.data();
-
-    const int num_samples = n_sample;
-    const int input_channel = channel_in;
-    const int output_channel = channel_out;
-    const int kernel_height = height_kernel; // Assuming width_kernel is also K
-
-    Kernel kernel;
-    std::cout << "Convolution - GPU:" << std::endl;
-
-    // Launch marker kernel to aid with student function timing
-    // gpuInterface.insert_pre_barrier_kernel();
-
-    // Start layer timer
-    GpuTimer timer;
-    timer.Start();
-    kernel.conv_forward_gpu_full(output_data, input_data, weight_data,
-                                 num_samples, output_channel, input_channel,
-                                 height_in, width_in, kernel_height);
-
-    // Stop layer timer
-    timer.Stop();
-    float duration_layer = timer.Elapsed();
-
-    // Launch barrier kernel to aid with timing with nsight-compute
-    // gpuInterface.insert_post_barrier_kernel();
-
-    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
-}
 
 // col2im, used for grad_bottom
 // data_col size: Matrix (hw_out, hw_kernel * channel_in)
 // image size: Vector (height_in * width_in * channel_in)
-void ConvKernel_simple::col2im(const Matrix &data_col, Vector &image)
+void ConvKernel::col2im(const Matrix &data_col, Vector &image)
 {
     int hw_in = height_in * width_in;
     int hw_kernel = height_kernel * width_kernel;
@@ -130,7 +116,7 @@ void ConvKernel_simple::col2im(const Matrix &data_col, Vector &image)
     }
 }
 
-void ConvKernel_simple::backward(const Matrix &bottom, const Matrix &grad_top)
+void ConvKernel::backward(const Matrix &bottom, const Matrix &grad_top)
 {
     int n_sample = bottom.cols();
     grad_weight.setZero();
@@ -156,7 +142,7 @@ void ConvKernel_simple::backward(const Matrix &bottom, const Matrix &grad_top)
     }
 }
 
-void ConvKernel_simple::update(Optimizer &opt)
+void ConvKernel::update(Optimizer &opt)
 {
     Vector::AlignedMapType weight_vec(weight.data(), weight.size());
     Vector::AlignedMapType bias_vec(bias.data(), bias.size());
@@ -167,7 +153,7 @@ void ConvKernel_simple::update(Optimizer &opt)
     opt.update(bias_vec, grad_bias_vec);
 }
 
-std::vector<float> ConvKernel_simple::get_parameters() const
+std::vector<float> ConvKernel::get_parameters() const
 {
     std::vector<float> res(weight.size() + bias.size());
     // Copy the data of weights and bias to a long vector
@@ -176,7 +162,7 @@ std::vector<float> ConvKernel_simple::get_parameters() const
     return res;
 }
 
-void ConvKernel_simple::set_parameters(const std::vector<float> &param)
+void ConvKernel::set_parameters(const std::vector<float> &param)
 {
     if (static_cast<int>(param.size()) != weight.size() + bias.size())
         throw std::invalid_argument("Parameter size does not match");
@@ -184,7 +170,7 @@ void ConvKernel_simple::set_parameters(const std::vector<float> &param)
     std::copy(param.begin() + weight.size(), param.end(), bias.data());
 }
 
-std::vector<float> ConvKernel_simple::get_derivatives() const
+std::vector<float> ConvKernel::get_derivatives() const
 {
     std::vector<float> res(grad_weight.size() + grad_bias.size());
     // Copy the data of weights and bias to a long vector

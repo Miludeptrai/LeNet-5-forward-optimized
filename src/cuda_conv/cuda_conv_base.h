@@ -1,13 +1,14 @@
-#ifndef SRC_LAYER_CONV_KERNEL_H_
-#define SRC_LAYER_CONV_KERNEL_H_
+#ifndef SRC_CUDA_CONV_BASE_H_
+#define SRC_CUDA_CONV_BASE_H_
 
 #include <vector>
 #include "../layer.h"
-#include "kernel_simple.h"
+#include "kernel_testing.h"
+#include "cuda_lib.h"
 
-class ConvKernel_simple : public Layer
+class ConvKernel : public Layer
 {
-private:
+protected:
     const int dim_in;
     int dim_out;
 
@@ -34,7 +35,7 @@ private:
     void init();
 
 public:
-    ConvKernel_simple(int channel_in, int height_in, int width_in, int channel_out,
+    ConvKernel(int channel_in, int height_in, int width_in, int channel_out,
                int height_kernel, int width_kernel, int stride = 1, int pad_w = 0,
                int pad_h = 0) : dim_in(channel_in * height_in * width_in),
                                 channel_in(channel_in), height_in(height_in), width_in(width_in),
@@ -44,15 +45,15 @@ public:
         init();
     }
 
-    void forward(const Matrix &bottom);
-    void backward(const Matrix &bottom, const Matrix &grad_top);
-    void update(Optimizer &opt);
-    void im2col(const Vector &image, Matrix &data_col);
-    void col2im(const Matrix &data_col, Vector &image);
-    int output_dim() { return dim_out; }
-    std::vector<float> get_parameters() const;
-    std::vector<float> get_derivatives() const;
-    void set_parameters(const std::vector<float> &param);
+    virtual void forward(const Matrix &bottom);
+    virtual void backward(const Matrix &bottom, const Matrix &grad_top);
+    virtual void update(Optimizer &opt);
+    virtual void im2col(const Vector &image, Matrix &data_col);
+    virtual void col2im(const Matrix &data_col, Vector &image);
+    virtual int output_dim() { return dim_out; }
+    virtual std::vector<float> get_parameters() const;
+    virtual std::vector<float> get_derivatives() const;
+    virtual void set_parameters(const std::vector<float> &param);
 };
 
-#endif // SRC_LAYER_CONV_KERNEL_H_
+#endif 
