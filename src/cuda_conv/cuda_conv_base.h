@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "../layer.h"
-#include "kernel_testing.h"
 #include "cuda_lib.h"
 
 class ConvKernel : public Layer
@@ -42,7 +41,7 @@ public:
                                 channel_out(channel_out), height_kernel(height_kernel),
                                 width_kernel(width_kernel), stride(stride), pad_w(pad_w), pad_h(pad_h)
     {
-        init();
+        virtual init();
     }
 
     virtual void forward(const Matrix &bottom);
