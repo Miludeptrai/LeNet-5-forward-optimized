@@ -5,6 +5,26 @@
 #include "../layer.h"
 #include "cuda_lib.h"
 
+
+float computeError(float * a1, float * a2, int n)
+{
+	float err = 0;
+	for (int i = 0; i < n; i++)
+	{
+		err += abs((int)a1[i] - (int)a2[i]);
+	}
+	err /= (n);
+	return err;
+}
+
+void printError(float * deviceResult, float * hostResult, int width, int height)
+{
+	float err = computeError(deviceResult, hostResult, width * height);
+	printf("Error: %f\n", err);
+	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
+}
+
+
 class ConvKernel : public Layer
 {
 protected:
@@ -31,7 +51,7 @@ protected:
 
     std::vector<Matrix> data_cols;
 
-    void init();
+    virtual void init();
 
 public:
     ConvKernel(int channel_in, int height_in, int width_in, int channel_out,
@@ -41,7 +61,7 @@ public:
                                 channel_out(channel_out), height_kernel(height_kernel),
                                 width_kernel(width_kernel), stride(stride), pad_w(pad_w), pad_h(pad_h)
     {
-        virtual init();
+        init();
     }
 
     virtual void forward(const Matrix &bottom);

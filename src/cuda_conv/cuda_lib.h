@@ -2,6 +2,9 @@
 #define SRC_CUDA_LIB_H_
 
 #include <vector>
+#include <stdio.h>
+#include <stdint.h>
+#include <cuda_runtime.h>
 
 
 #define CHECK(call)                                                \
@@ -53,23 +56,5 @@ struct GpuTimer
     }
 };
 
-
-float computeError(float * a1, float * a2, int n)
-{
-	float err = 0;
-	for (int i = 0; i < n; i++)
-	{
-		err += abs((int)a1[i] - (int)a2[i]);
-	}
-	err /= (n);
-	return err;
-}
-
-void printError(float * deviceResult, float * hostResult, int width, int height)
-{
-	float err = computeError(deviceResult, hostResult, width * height);
-	printf("Error: %f\n", err);
-	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
-}
 
 #endif 
