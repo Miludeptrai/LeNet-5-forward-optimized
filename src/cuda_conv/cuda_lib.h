@@ -1,5 +1,6 @@
 #ifndef SRC_CUDA_LIB_H_
 #define SRC_CUDA_LIB_H_
+#pragma once
 
 #include <vector>
 #include <stdio.h>

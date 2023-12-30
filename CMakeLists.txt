@@ -10,6 +10,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fmad=false")
 set(CUDA_SOURCES
     /src/LeNet5/LeNet5.cc
     /src/LeNet5/LeNet5.h
+    /src/cuda_conv
     /src/cuda_testing
     /src/cuda_kernels_optimized
     /src/cuda_kernels_none_optimize

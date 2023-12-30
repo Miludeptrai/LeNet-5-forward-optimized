@@ -1,5 +1,6 @@
 #ifndef SRC_CUDA_CONV_BASE_H_
 #define SRC_CUDA_CONV_BASE_H_
+#pragma once
 
 #include <vector>
 #include "../layer.h"
@@ -8,7 +9,7 @@
 
 float computeError(float * a1, float * a2, int n)
 {
-	float err = 0;
+	float err = 0;  
 	for (int i = 0; i < n; i++)
 	{
 		err += abs((int)a1[i] - (int)a2[i]);
@@ -64,7 +65,7 @@ public:
         init();
     }
 
-    virtual void forward(const Matrix &bottom);
+    virtual void forward(const Matrix &bottom) = 0;
     virtual void backward(const Matrix &bottom, const Matrix &grad_top);
     virtual void update(Optimizer &opt);
     virtual void im2col(const Vector &image, Matrix &data_col);

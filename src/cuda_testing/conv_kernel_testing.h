@@ -1,5 +1,6 @@
 #ifndef SRC_CONV_KERNEL_TESTING_H_
 #define SRC_CONV_KERNEL_TESTING_H_
+#pragma once
 
 #include <vector>
 #include "../layer.h"
