@@ -1,5 +1,5 @@
-#ifndef SRC_KERNEL_TESTING_H_
-#define SRC_KERNEL_TESTING_H_
+#ifndef CONV_GPU_H
+#define CONV_GPU_H
 #pragma once
 
 #include <stdio.h>
@@ -55,7 +55,7 @@ struct GpuTimer
     }
 };
 
-class Kernel_testing
+class Kernel_simple
 {
 public:
     char *concatStr(const char *s1, const char *s2);
@@ -63,12 +63,6 @@ public:
     void conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
                                const int num_samples, const int output_channel, const int input_channel,
                                const int height_in, const int width_in, const int kernel_height);
-
-    void testing_unroll(int channel_in, int height_in, int width_in, int height_kernel, 
-                            int width_kernel, int height_out, int width_out, 
-                            float* X, float* X_unroll);
-    void testing_matrix_multiplication(float* A, float* B, float* C, int m, int n, int k,
-                         dim3 blockSize = dim3(1));
 };
 
 #endif

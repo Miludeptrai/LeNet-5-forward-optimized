@@ -1,11 +1,11 @@
-#ifndef SRC_CONV_KERNEL_TESTING_H_
-#define SRC_CONV_KERNEL_TESTING_H_
+#ifndef SRC_LAYER_CONV_KERNEL_H_
+#define SRC_LAYER_CONV_KERNEL_H_
 
 #include <vector>
 #include "../layer.h"
-#include "kernel_testing.h"
+#include "kernel_simple.h"
 
-class ConvKernel_testing : public Layer
+class ConvKernel_simple : public Layer
 {
 private:
     const int dim_in;
@@ -34,7 +34,7 @@ private:
     void init();
 
 public:
-    ConvKernel_testing(int channel_in, int height_in, int width_in, int channel_out,
+    ConvKernel_simple(int channel_in, int height_in, int width_in, int channel_out,
                int height_kernel, int width_kernel, int stride = 1, int pad_w = 0,
                int pad_h = 0) : dim_in(channel_in * height_in * width_in),
                                 channel_in(channel_in), height_in(height_in), width_in(width_in),
