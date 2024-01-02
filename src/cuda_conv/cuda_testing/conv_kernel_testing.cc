@@ -64,9 +64,9 @@ void ConvKernel_testing::forward(const Matrix &bottom)
     //   // Start layer timer
     Matrix data_col;
     data_col.resize(height_out*width_out, height_kernel*width_kernel * channel_in); 
-      kernel.testing_unroll(channel_in, height_in, width_in, height_kernel, 
+      kernel_testing.testing_unroll(channel_in, height_in, width_in, height_kernel, 
                              width_kernel,  height_out,  width_out, 
-                             bottom.col(i).data(), data_col.data());
+                             (float *)bottom.col(i).data(), (float *)data_col.data());
 
     //   // Stop layer timer
     //   timer.Stop();

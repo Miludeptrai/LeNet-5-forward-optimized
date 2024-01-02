@@ -1,4 +1,4 @@
-#include "kernel_testing.h"
+#include "kernel_none_optimize.h"
 #define TILE_WIDTH 32
 
 
@@ -100,7 +100,7 @@ __global__ void matrix_multiplication_kernel2(float* A, float* B, float* C, int 
     //     C[c * m + r] = sum; 
 }
 
-__host__ void Kernel_testing::testing_unroll(int channel_in, int height_in, int width_in, int height_kernel, 
+__host__ void Kernel_none_optimize::none_optimize_unroll(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
                             float* X, float* X_unroll)
 {
@@ -132,7 +132,7 @@ __host__ void Kernel_testing::testing_unroll(int channel_in, int height_in, int 
 }
 
 
-__host__ void Kernel_testing::testing_matrix_multiplication(float* A, float* B, float* C, int m, int n, int k,
+__host__ void Kernel_none_optimize::none_optimize_matrix_multiplication(float* A, float* B, float* C, int m, int n, int k,
                          dim3 blockSize )
 {
     // Allocate device memory
@@ -161,31 +161,13 @@ __host__ void Kernel_testing::testing_matrix_multiplication(float* A, float* B, 
 
 
 
-__global__ void unroll_multi_kernel(int channel_in, int height_in, int width_in, int height_kernel, 
-                            int width_kernel, int height_out, int width_out, 
-                            float* X, float* X_unroll)
+__global__ void conv_forward_kernel(int channel_in, int height_in, int width_in, int height_kernel, 
+                            int width_kernel, int height_out,int width_out,int channel_out,
+                            const float *input_data, const float*unroll_matrix, const float *weight_data, float *output_data) //float* X, float* X_unroll 
 {
-    // int t = blockIdx.x * blockDim.x + threadIdx.x; //1
-    // int width_unroll = height_out * width_out; //2*2 
-    // if(t < channel_in*width_unroll)
-    // {
-    //     int c = t / width_unroll; //0 
-    //     int col_unroll = t % width_unroll;//1
-    //     int row_out = col_unroll / width_out;//0
-    //     int col_out = col_unroll % width_out;//1
-    //     int a0 = c*(width_in*height_in);//0
-    //     int w_base = c * width_kernel * height_kernel; //0
-    //     for (int p = 0; p < height_kernel; p++){ 
-    //         int a1 = ( row_out + p)*width_in; // 0
-    //         for(int q = 0; q < width_kernel; q++){
-    //             int a2 =  col_out + q; //1
-    //             int row_unroll = w_base + p * width_kernel + q; 
-    //             X_unroll[row_unroll*width_unroll + col_unroll] = X[a0 + a1 + a2];
-    //         }
-    //     }
-    // }
     int t = blockIdx.x * blockDim.x + threadIdx.x; //
     int height_unroll = height_out * width_out; //2
+    int width_unroll = height_kernel * width_kernel * channel_in;
     if(t < channel_in*height_unroll)
     {   
         //output is a vector size : imagearea x (kernalarea * channel_in)
@@ -204,6 +186,8 @@ __global__ void unroll_multi_kernel(int channel_in, int height_in, int width_in,
 
         //how many rows of the channel before this?
         int w_base =  c * width_kernel * height_kernel; //
+
+        int pre_sum = 0;
         for (int p = 0; p < height_kernel; p++){ 
             int a1 = ( row_out + p)*width_in; // 
             for(int q = 0; q < width_kernel; q++){
@@ -213,47 +197,73 @@ __global__ void unroll_multi_kernel(int channel_in, int height_in, int width_in,
                 //Attention, in spite of each channel (vector) store data in row-major, 
                 //But our output is a matrix, so we need to perform storing in col-major
                 //I hate this =.= 
-                X_unroll[col_unroll*height_unroll + row_unroll] = X[a0 + a1 + a2];
+                //X_unroll[col_unroll*height_unroll + row_unroll] = X[a0 + a1 + a2];
+                unroll_matrix[col_unroll*height_unroll + row_unroll] = input_data[a0 + a1 + a2];
             }
         }
     }
+    __syncthreads();
+    if (t < height_unroll * channel_out) {
+        int c = t % channel_out ; 
+        int r = t / channel_out;
+        //if (r < m && c < k) {
+            float sum = 0 ;
+            for (int i = 0; i < width_unroll ; i++) { 
+                sum += unroll_matrix[i*height_unroll + r] * weight_data[c*width_unroll + i];
+            }
+            output_data[c*height_unroll + r] = sum ; 
+        //}
+    }
 }
 
-__host__ void conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
-                               const int num_samples, const int output_channel, const int input_channel,
-                               const int height_in, const int width_in, const int kernel_height){
-    
+__host__ void conv_forward_gpu_full(const int n_samples, const int channel_in, const int height_in,const int width_in,
+                                    int height_kernel, int width_kernel, const int channel_out,
+                                    const float *input_data, const float *weight_data, float *output_data){
 
     const int height_out = height_in - kernel_height + 1;
-    const int width_out = width_in - kernel_height + 1;
+    const int width_out = width_in - width_kernel + 1;
 
+    const int height_unroll = height_out * width_out;
+    const int width_unroll = height_kernel * width_kernel * channel_in;
     // Allocate device memory
-    float *device_input, *device_output, *device_weight;
-    CHECK(cudaMalloc((void **)&device_input, num_samples * input_channel * height_in * width_in * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_output, num_samples * output_channel * height_out * width_out * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_weight, output_channel * input_channel * kernel_height * kernel_height * sizeof(float)));
+    float *device_input, *device_output, *device_weight, *device_unroll_matrix;
+    CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * kernel_height * width_kernel * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_unroll_matrix, height_out * width_out * channel_in * kernel_height * width_kernel * sizeof(float)));
 
     // Copy input and mask data to device
-    CHECK(cudaMemcpy(device_input, input_data, num_samples * input_channel * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(device_weight, weight_data, output_channel * input_channel * kernel_height * kernel_height * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * kernel_height * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
 
-    // Set the kernel dimensions and call the kernel
-    int height_grid = (height_out + TILE_WIDTH - 1) / TILE_WIDTH;
-    int width_grid = (width_out + TILE_WIDTH - 1) / TILE_WIDTH;
-    int Z = height_grid * width_grid;
-    dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 num_blocks_in_grid(num_samples, output_channel, Z);
+    // // Set the kernel dimensions and call the kernel
+    // int height_grid = (height_out + TILE_WIDTH - 1) / TILE_WIDTH;
+    // int width_grid = (width_out + TILE_WIDTH - 1) / TILE_WIDTH;
+    // int Z = height_grid * width_grid;
+    // dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
+    // dim3 num_blocks_in_grid(n_samples, output_channel, Z);
+    
+    dim3 num_threads_per_block(1024);
+    dim3 num_blocks_in_grid((height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );
+
+    for (int i = 0; i < n_samples; i ++) {
+        conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(channel_in, height_in, width_in, height_kernel, 
+                            width_kernel, height_out, width_out, channel_out,
+                            device_input + i*channel_in * height_in * width_in, device_unroll_matrix, 
+                            device_weight + i*channel_in * height_in * width_in, device_output + i*channel_in * height_in * width_in)
+    }
 
     // Launch the kernel
-    conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    //conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, n_samples, output_channel, channel_in, height_in, width_in, kernel_height);
     CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host
-    CHECK(cudaMemcpy(output_data, device_output, num_samples * output_channel * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(output_data, device_output, n_samples * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
 
     // Free device memory
     CHECK(cudaFree(device_input));
     CHECK(cudaFree(device_output));
     CHECK(cudaFree(device_weight));
+    CHECK(cudaFree(device_unroll_matrix));
 
 }

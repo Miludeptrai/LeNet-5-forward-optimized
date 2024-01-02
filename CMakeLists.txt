@@ -11,9 +11,6 @@ set(CUDA_SOURCES
     /src/LeNet5/LeNet5.cc
     /src/LeNet5/LeNet5.h
     /src/cuda_conv
-    /src/cuda_testing
-    /src/cuda_kernels_optimized
-    /src/cuda_kernels_none_optimize
     /src/layer
 )
 

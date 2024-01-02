@@ -20,6 +20,7 @@
 #include "../layer/conv.h"
 #include "../cuda_conv/cuda_testing/conv_kernel_testing.h"
 #include "../cuda_conv/cuda_kernels_simple/conv_kernel_simple.h"
+#include "../cuda_conv/cuda_kernels_simple/conv_kernel_none_optimize.h"
 
 #include "../layer/fully_connected.h"
 #include "../layer/ave_pooling.h"
@@ -38,5 +39,5 @@
 Network LeNet5_CPU();
 Network LeNet5_SIMPLE();
 Network LeNet5_CUDA_TESTING();
-//Network LeNet5_CUDA_NONE_OPTIMIZE();
+Network LeNet5_CUDA_NONE_OPTIMIZE();
 // Network LeNet5_CUDA_OPTIMIZED();
