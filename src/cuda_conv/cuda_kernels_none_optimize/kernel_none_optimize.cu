@@ -214,6 +214,68 @@ __global__ void conv_forward_kernel(int channel_in, int height_in, int width_in,
         //}
     }
 }
+__global__ void conv_forward_kernel_1(int channel_in, int height_in, int width_in, int height_kernel, 
+                            int width_kernel, int height_out,int width_out,int channel_out,
+                            const float *input_data, float*unroll_matrix, const float *weight_data, float *output_data) //float* X, float* X_unroll 
+{
+    int t = blockIdx.x * blockDim.x + threadIdx.x; //
+    int height_unroll = height_out * width_out; //2
+    int hw_kernel = width_kernel * height_kernel;
+    int width_unroll = hw_kernel * channel_in;
+    if(t < width_unroll)
+    {   
+        //output is a vector size : imagearea x (kernalarea * channel_in)
+
+        //which chanel are we using?
+        int c = t / hw_kernel; //
+        //ith of each filter?
+        int ith = t % hw_kernel;//
+        
+        int a0 = c*(width_in*height_in);
+        for (int i =0 ;i <height_unroll ; i++){
+            int i_row = i/width_out + ith/width_kernel;
+            int i_col = i%width_out + ith%width_kernel;
+            unroll_matrix[ t*height_unroll+ i] = input_data[a0 + i_row*width_in + i_col];
+        }
+
+
+    //     //start position 
+    //     int row_out = row_unroll / width_out;//
+    //     int col_out = row_unroll % width_out;//
+
+    //     //channel start position 
+    //     int a0 = c*(width_in*height_in);//
+
+    //     //how many rows of the channel before this?
+    //     int w_base =  c * width_kernel * height_kernel; //
+
+    //     for (int p = 0; p < height_kernel; p++){ 
+    //         int a1 = ( row_out + p)*width_in; // 
+    //         for(int q = 0; q < width_kernel; q++){
+    //             int a2 =  col_out + q; //
+    //             int col_unroll =w_base + p * width_kernel + q; //+
+
+    //             //Attention, in spite of each channel (vector) store data in row-major, 
+    //             //But our output is a matrix, so we need to perform storing in col-major
+    //             //I hate this =.= 
+    //             //X_unroll[col_unroll*height_unroll + row_unroll] = X[a0 + a1 + a2];
+    //             unroll_matrix[col_unroll*height_unroll + row_unroll] = input_data[a0 + a1 + a2];
+    //         }
+    //     }
+    }
+    __syncthreads();
+    if (t < height_unroll * channel_out) {
+        int c = t % channel_out ; 
+        int r = t / channel_out;
+        //if (r < m && c < k) {
+            float sum = 0 ;
+            for (int i = 0; i < width_unroll ; i++) { 
+                sum += unroll_matrix[i*height_unroll + r] * weight_data[c*width_unroll + i];
+            }
+            output_data[c*height_unroll + r] = sum ; 
+        //}
+    }
+}
 
 __host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int channel_in,  int height_in, int width_in,
                                     int height_kernel, int width_kernel,  int channel_out,
@@ -241,18 +303,18 @@ __host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int c
     // dim3 num_blocks_in_grid(n_samples, output_channel, Z);
     
     dim3 num_threads_per_block(1024);
-    dim3 num_blocks_in_grid((height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );
+    dim3 num_blocks_in_grid((max(width_kernel * height_kernel*channel_in,height_out * width_out  *channel_out)-1)/1024 + 1 );
 
     for (int i = 0; i < n_samples; i ++) {
         conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(channel_in, height_in, width_in, height_kernel, 
                             width_kernel, height_out, width_out, channel_out,
                             device_input + i*channel_in * height_in * width_in, device_unroll_matrix, 
-                            device_weight + i*channel_in * height_in * width_in, device_output + i*channel_in * height_in * width_in);
+                            device_weight, device_output + i*channel_out * height_out * width_out);
     }
 
     // Launch the kernel
     //conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, n_samples, output_channel, channel_in, height_in, width_in, kernel_height);
-    CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
+    //CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host
     CHECK(cudaMemcpy(output_data, device_output, n_samples * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));

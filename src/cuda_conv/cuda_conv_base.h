@@ -13,9 +13,14 @@
 inline float computeError(float * a1, float * a2, int n)
 {
 	float err = 0;
+    bool flag = true;
 	for (int i = 0; i < n; i++)
 	{
 		err += abs((int)a1[i] - (int)a2[i]);
+        if (abs((int)a1[i] - (int)a2[i]) > 0.1 && flag){
+            printf("first error %d at i=%d\n",abs((int)a1[i] - (int)a2[i]),i);
+            flag = false;
+        }
 	}
 	err /= (n);
 	return err;
