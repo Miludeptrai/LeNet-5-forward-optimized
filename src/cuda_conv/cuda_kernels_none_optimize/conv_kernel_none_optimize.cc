@@ -49,7 +49,7 @@ void ConvKernel_none_optimize::forward(const Matrix &bottom)
     // Launch marker kernel to aid with student function timing
     // gpuInterface.insert_pre_barrier_kernel();
 
-    // Start layer timer
+    // Start layer timer 
     kernel.conv_forward_gpu_full(n_sample,channel_in,  height_in, width_in,
                                     height_kernel, width_kernel, channel_out,
                                     input_data, weight_data, output_data);

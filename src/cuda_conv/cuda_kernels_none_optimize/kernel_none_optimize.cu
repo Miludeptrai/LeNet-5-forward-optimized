@@ -215,13 +215,13 @@ __global__ void conv_forward_kernel(int channel_in, int height_in, int width_in,
     }
 }
 
-__host__ void conv_forward_gpu_full(const int n_samples, const int channel_in, const int height_in,const int width_in,
-                                    int height_kernel, int width_kernel, const int channel_out,
-                                    const float *input_data, float *weight_data, float *output_data){
+__host__ void conv_forward_gpu_full( int n_samples,  int channel_in,  int height_in, int width_in,
+                                    int height_kernel, int width_kernel,  int channel_out,
+                                     float *input_data, float *weight_data, float *output_data){
 
     const int height_out = height_in - height_kernel + 1;
     const int width_out = width_in - width_kernel + 1;
-    
+
     // Allocate device memory
     float *device_input, *device_output, *device_weight, *device_unroll_matrix;
     CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
