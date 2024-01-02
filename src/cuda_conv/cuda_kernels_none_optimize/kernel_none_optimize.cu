@@ -163,7 +163,7 @@ __host__ void Kernel_none_optimize::none_optimize_matrix_multiplication(float* A
 
 __global__ void conv_forward_kernel(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out,int width_out,int channel_out,
-                            const float *input_data, const float*unroll_matrix, const float *weight_data, float *output_data) //float* X, float* X_unroll 
+                            const float *input_data, float*unroll_matrix, const float *weight_data, float *output_data) //float* X, float* X_unroll 
 {
     int t = blockIdx.x * blockDim.x + threadIdx.x; //
     int height_unroll = height_out * width_out; //2
@@ -187,7 +187,6 @@ __global__ void conv_forward_kernel(int channel_in, int height_in, int width_in,
         //how many rows of the channel before this?
         int w_base =  c * width_kernel * height_kernel; //
 
-        int pre_sum = 0;
         for (int p = 0; p < height_kernel; p++){ 
             int a1 = ( row_out + p)*width_in; // 
             for(int q = 0; q < width_kernel; q++){
@@ -218,23 +217,21 @@ __global__ void conv_forward_kernel(int channel_in, int height_in, int width_in,
 
 __host__ void conv_forward_gpu_full(const int n_samples, const int channel_in, const int height_in,const int width_in,
                                     int height_kernel, int width_kernel, const int channel_out,
-                                    const float *input_data, const float *weight_data, float *output_data){
+                                    const float *input_data, float *weight_data, float *output_data){
 
-    const int height_out = height_in - kernel_height + 1;
+    const int height_out = height_in - height_kernel + 1;
     const int width_out = width_in - width_kernel + 1;
-
-    const int height_unroll = height_out * width_out;
-    const int width_unroll = height_kernel * width_kernel * channel_in;
+    
     // Allocate device memory
     float *device_input, *device_output, *device_weight, *device_unroll_matrix;
     CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * kernel_height * width_kernel * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_unroll_matrix, height_out * width_out * channel_in * kernel_height * width_kernel * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_unroll_matrix, height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float)));
 
     // Copy input and mask data to device
     CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * kernel_height * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
 
     // // Set the kernel dimensions and call the kernel
     // int height_grid = (height_out + TILE_WIDTH - 1) / TILE_WIDTH;
@@ -250,7 +247,7 @@ __host__ void conv_forward_gpu_full(const int n_samples, const int channel_in, c
         conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(channel_in, height_in, width_in, height_kernel, 
                             width_kernel, height_out, width_out, channel_out,
                             device_input + i*channel_in * height_in * width_in, device_unroll_matrix, 
-                            device_weight + i*channel_in * height_in * width_in, device_output + i*channel_in * height_in * width_in)
+                            device_weight + i*channel_in * height_in * width_in, device_output + i*channel_in * height_in * width_in);
     }
 
     // Launch the kernel
