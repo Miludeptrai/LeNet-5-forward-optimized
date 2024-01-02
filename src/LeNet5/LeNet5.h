@@ -20,7 +20,7 @@
 #include "../layer/conv.h"
 #include "../cuda_conv/cuda_testing/conv_kernel_testing.h"
 #include "../cuda_conv/cuda_kernels_simple/conv_kernel_simple.h"
-#include "../cuda_conv/cuda_kernels_simple/conv_kernel_none_optimize.h"
+#include "../cuda_conv/cuda_kernels_none_optimize/conv_kernel_none_optimize.h"
 
 #include "../layer/fully_connected.h"
 #include "../layer/ave_pooling.h"
