@@ -303,7 +303,7 @@ __host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int c
     // dim3 num_blocks_in_grid(n_samples, output_channel, Z);
     
     dim3 num_threads_per_block(1024);
-    dim3 num_blocks_in_grid((max(width_kernel * height_kernel*channel_in,height_out * width_out  *channel_out)-1)/1024 + 1 );
+    dim3 num_blocks_in_grid((height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );
 
     for (int i = 0; i < n_samples; i ++) {
         conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(channel_in, height_in, width_in, height_kernel, 
