@@ -50,7 +50,7 @@ void ConvKernel_none_optimize::forward(const Matrix &bottom)
     // gpuInterface.insert_pre_barrier_kernel();
 
     // Start layer timer 
-    kernel_none_optimize.conv_forward_gpu_full(n_sample,channel_in,  height_in, width_in,
+    kernel_none_optimize.cuda_conv_forward(n_sample,channel_in,  height_in, width_in,
                                     height_kernel, width_kernel, channel_out,
                                     input_data, weight_data, output_data);
 

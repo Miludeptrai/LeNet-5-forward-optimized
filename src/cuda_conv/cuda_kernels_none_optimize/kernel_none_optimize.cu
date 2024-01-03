@@ -40,6 +40,7 @@ __global__ void unroll_kernel_1(int channel_in, int height_in, int width_in, int
             }
         }
     }
+    //We dont use multi here, because, we cant sync whole grid 
 }
 __global__ void unroll_kernel_2(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
@@ -66,7 +67,7 @@ int t = blockIdx.x * blockDim.x + threadIdx.x; //
         }
     }
 }
-__global__ void matrix_multiplication_kernel_1(float* A, float* B, float* C, int m, int n, int k)
+__global__ void matrix_multiplication_kernel(float* A, float* B, float* C, int m, int n, int k)
 {
 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
 	int r = blockIdx.y * blockDim.y + threadIdx.y; 
@@ -81,7 +82,7 @@ __global__ void matrix_multiplication_kernel_1(float* A, float* B, float* C, int
 }
 
 
-__host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int channel_in,  int height_in, int width_in,
+__host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int channel_in,  int height_in, int width_in,
                                     int height_kernel, int width_kernel,  int channel_out,
                                      float *input_data, float *weight_data, float *output_data){
 
@@ -118,7 +119,7 @@ __host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int c
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input + i*channel_in * height_in * width_in,  device_unroll_matrix);
-        matrix_multiplication_kernel_1<<<gridSize_multi,blockSize_multi>>>
+        matrix_multiplication_kernel<<<gridSize_multi,blockSize_multi>>>
                             (device_unroll_matrix,device_weight,device_output + i*channel_out * height_out * width_out
                             ,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
         
