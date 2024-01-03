@@ -184,6 +184,7 @@ __host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int c
     CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_unroll_matrix, height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_unroll_matrix_test, height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float)));
 
     // Copy input and mask data to device
     CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
@@ -208,9 +209,10 @@ __host__ void Kernel_none_optimize::conv_forward_gpu_full( int n_samples,  int c
                            width_kernel, height_out, width_out, channel_out,
                            device_input + i*channel_in * height_in * width_in, device_unroll_matrix, 
                            device_weight, device_output + i*channel_out * height_out * width_out);
-        //unroll_kernel_1<<<num_blocks_in_grid_1, num_threads_per_block_1>>>( channel_in,  height_in,  width_in,  height_kernel, 
-        //                     width_kernel,  height_out,  width_out, 
-        //                    device_input + i*channel_in * height_in * width_in,  device_unroll_matrix);
+        unroll_kernel_1<<<num_blocks_in_grid_1, num_threads_per_block_1>>>( channel_in,  height_in,  width_in,  height_kernel, 
+                             width_kernel,  height_out,  width_out, 
+                            device_input + i*channel_in * height_in * width_in,  device_unroll_matrix_test);
+        printError(device_unroll_matrix,device_unroll_matrix_test,height_out * width_out * channel_in * height_kernel * width_kernel,1)
         //matrix_multiplication_kernel_1<<<gridSize,blockSize>>>(device_unroll_matrix,device_weight,device_output + i*channel_out * height_out * width_out,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
     }
 

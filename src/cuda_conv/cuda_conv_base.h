@@ -6,32 +6,6 @@
 #include "../layer.h"
 #include "cuda_lib.h"
 
-//each time compiler see some thing include lib, multiple time 
-// It will define any funtion in that lib multiple time 
-//use  inline to make it complie one 
-
-inline float computeError(float * a1, float * a2, int n)
-{
-	float err = 0;
-    bool flag = true;
-	for (int i = 0; i < n; i++)
-	{
-		err += abs((int)(a1[i]*1000) - (int)(a2[i]*1000));
-        if (abs((int)(a1[i]*1000) - (int)(a2[i]*1000)) > 0.1 && flag){
-            printf("first error %d at i=%d, values : %f, %f\n",abs((int)a1[i] - (int)a2[i]),i,a1[i],a2[i]);
-            flag = false;
-        }
-	}
-	err /= (n);
-	return err;
-}
-
-inline void printError(float * deviceResult, float * hostResult, int width, int height)
-{
-	float err = computeError(deviceResult, hostResult, width * height);
-	printf("Error: %f\n", err);
-	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
-}
 
 
 
