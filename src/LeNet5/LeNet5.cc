@@ -179,7 +179,7 @@ Network LeNet5_CUDA_NONE_OPTIMIZE_QUAD(){
 
     return dnn;   
 }
-Network LeNet5_CUDA_CUDA_SIMPLE_QUAD(){
+Network LeNet5_CUDA_SIMPLE_QUAD(){
     Network dnn;
     Layer* conv1 = new ConvKernel_simple(1, 112, 112, 6, 17, 17, 1, 0, 0);
     Layer* pool1 = new AvePooling(6, 96, 96, 2, 2, 2);
