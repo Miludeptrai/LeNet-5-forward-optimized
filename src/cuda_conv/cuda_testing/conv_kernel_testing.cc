@@ -53,7 +53,7 @@ void ConvKernel_testing::forward(const Matrix &bottom)
     for (int i = 0; i < n_sample; i ++) {
       
     //   float *input_data = (float *)bottom.col(i).data();
-    //   float *output_data = (float *)malloc(height_out * width_out * height_kernel * width_kernel * channel_in * sizeof(float));
+       float *output_data1 = (float *)malloc(height_out * width_out * height_kernel * width_kernel * channel_in * sizeof(float));
 
       Kernel_testing kernel_testing;
     //   std::cout << "Convolution - GPU:" << std::endl;
@@ -62,11 +62,11 @@ void ConvKernel_testing::forward(const Matrix &bottom)
     //   // gpuInterface.insert_pre_barrier_kernel();
 
     //   // Start layer timer
-    Matrix data_col;
-    data_col.resize(height_out*width_out, height_kernel*width_kernel * channel_in); 
+    //Matrix data_col;
+    //data_col.resize(height_out*width_out, height_kernel*width_kernel * channel_in); 
       kernel_testing.testing_unroll(channel_in, height_in, width_in, height_kernel, 
                              width_kernel,  height_out,  width_out, 
-                             (float *)bottom.col(i).data(), (float *)data_col.data());
+                             (float *)bottom.col(i).data(), output_data1);
 
     //   // Stop layer timer
     //   timer.Stop();
@@ -82,8 +82,8 @@ void ConvKernel_testing::forward(const Matrix &bottom)
 
 
     //   // im2col
-    //   Matrix data_col;
-    //   im2col(bottom.col(i), data_col);
+       Matrix data_col;
+      im2col(bottom.col(i), data_col);
     //   //data_cols[i] = data_col;
     //   // conv by product
     //   /////////////////////////////////////// test multiplication 
@@ -93,22 +93,22 @@ void ConvKernel_testing::forward(const Matrix &bottom)
          dim3 blockSize(32, 32);
     //     float *input_data1 = (float *)data_col.data();
     //     float *input_data2 = (float *)weight.data();
-    //    float *output_data = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
+        float *output_data2 = (float *)malloc(height_out * width_out * channel_out * sizeof(float));
     // timer.Start();
     
     // printf("Start kernal \n");
-    Matrix result;
-    result.resize(height_out*width_out, channel_out); 
+    //Matrix result;
+    //result.resize(height_out*width_out, channel_out); 
     
-       kernel_testing.testing_matrix_multiplication(data_col.data(), weight.data(), result.data(), height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
+       kernel_testing.testing_matrix_multiplication(data_col.data(), weight.data(), output_data2, height_out * width_out, height_kernel * width_kernel * channel_in, channel_out,blockSize);
       
     // timer.Stop();
     // float duration_layer = timer.Elapsed();
     // std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
       
     // timer.Start();
-    //   Matrix result = data_col * weight;  // result: (hw_out, channel_out)
-    // printError((float *)result.data(),output_data,height_out * width_out * channel_out,1);
+       Matrix result = data_col * weight;  // result: (hw_out, channel_out)
+    printError((float *)result.data(),output_data2,height_out * width_out * channel_out,1);
     //   result.rowwise() += bias.transpose();
     //   top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
       
