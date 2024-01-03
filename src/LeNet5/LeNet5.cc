@@ -36,7 +36,7 @@ Network LeNet5_CPU(){
     return dnn;
 }
 
-Network LeNet5_SIMPLE(){
+Network LeNet5_CUDA_SIMPLE(){
     Network dnn;
     Layer* conv1 = new ConvKernel_simple(1, 28, 28, 6, 5, 5, 1, 0, 0);
     Layer* pool1 = new AvePooling(6, 24, 24, 2, 2, 2);

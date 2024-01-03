@@ -37,7 +37,7 @@
 #include "../optimizer/sgd.h"
 
 Network LeNet5_CPU();
-Network LeNet5_SIMPLE();
+Network LeNet5_CUDA_SIMPLE();
 Network LeNet5_CUDA_TESTING();
 Network LeNet5_CUDA_NONE_OPTIMIZE();
 // Network LeNet5_CUDA_OPTIMIZED();
