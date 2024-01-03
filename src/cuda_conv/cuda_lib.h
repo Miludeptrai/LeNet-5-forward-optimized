@@ -29,6 +29,7 @@ inline float computeError(float * a1, float * a2, int n)
 
 inline void printError(float * deviceResult, float * hostResult, int width, int height)
 {
+    printf("printerror is called\n");
 	float err = computeError(deviceResult, hostResult, width * height);
 	printf("Error: %f\n", err);
 	printf("Sample :\n%f %f\n%f %f\n%f %f\n%f %f\n%f %f\n", deviceResult[0],hostResult[0],deviceResult[1],hostResult[1],deviceResult[2],hostResult[2],deviceResult[3],hostResult[3],deviceResult[4],hostResult[4]);
