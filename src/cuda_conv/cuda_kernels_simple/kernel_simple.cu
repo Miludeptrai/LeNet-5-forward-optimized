@@ -12,25 +12,26 @@ __global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,i
     int col_idx = blockIdx.x % width_out * TILE_WIDTH + threadIdx.x;
     
     float accumulator =  bias_data[output_feature_idx];
+    int start_weight = output_feature_idx * (channel_in * height_kernel * width_kernel);
+
+    //int start_batch = batch_idx * (channel_in * height_in * width_in);
 
     if (row_idx < height_out && col_idx < width_out)
     {
         for (int channel_in_idx = 0; channel_in_idx < channel_in; channel_in_idx++)
         {
+            int start_channel =  channel_in_idx * (height_in * width_in);
+            int start_kernel = channel_in_idx * (height_kernel * width_kernel);
             for (int kernel_row = 0; kernel_row < height_kernel; kernel_row++)
             {
+                int c_row = (row_idx + kernel_row)*width_in;
+                int k_row = kernel_row*width_kernel;
                 for (int kernel_col = 0; kernel_col < width_kernel; kernel_col++)
                 {
-                    int input_row = row_idx + kernel_row;
                     int input_col = col_idx + kernel_col;
-                    accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
-                                         (channel_in_idx * (height_in * width_in)) +
-                                         (input_row * width_in) +
-                                         input_col] *
-                                   weight_data[(output_feature_idx * (channel_in * height_kernel * width_kernel)) +
-                                          (channel_in_idx * (height_kernel * width_kernel)) +
-                                          (kernel_row * width_kernel) +
-                                          kernel_col];
+                    accumulator += input_data[//start_batch +
+                                         start_channel + c_row +  input_col] *
+                                   weight_data[ start_weight +  start_kernel +k_row + kernel_col];
                 }
             }
         }
@@ -67,7 +68,7 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
     dim3 num_blocks_in_grid(Z, channel_out,1);
-
+    
     // Launch the kernel
     
     for (int i = 0; i < n_samples; i ++) {

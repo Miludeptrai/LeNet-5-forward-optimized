@@ -23,7 +23,7 @@ inline float computeError(float * a1, float * a2, int n)
             flag = false;
         }
 	}
-    printf("two final values : %f %f\n",a1[n-1],a2[n-1])
+    printf("two final values : %f %f\n",a1[n-1],a2[n-1]);
 	err /= (n);
 	return err;
 }
