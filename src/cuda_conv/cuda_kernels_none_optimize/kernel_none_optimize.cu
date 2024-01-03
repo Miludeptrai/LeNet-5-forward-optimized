@@ -81,19 +81,36 @@ __global__ void matrix_multiplication_kernel(float* A, float* B, float* C, int m
   } 
 }
 
+__global__ void add_bias_kernel(int height_out, int width_out, int channel_out,
+                            float* output_data, float* bias_data)
+{
+	int t = blockIdx.x * blockDim.x + threadIdx.x; //
+    if (t<channel_out){
+        int bias = bias_data[t];
+        for (int c = 0 ;c<width_out ; c++){
+            for (int r=0;r<height_out;r++){
+                output_data[c*height_out + r] += bias;
+            }
+        }
+
+    }
+
+}
+
 
 __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int channel_in,  int height_in, int width_in,
                                     int height_kernel, int width_kernel,  int channel_out,
-                                     float *input_data, float *weight_data, float *output_data){
+                                     float *input_data, float *weight_data,float *bias_data, float *output_data){
 
     const int height_out = height_in - height_kernel + 1;
     const int width_out = width_in - width_kernel + 1;
 
     // Allocate device memory
-    float *device_input, *device_output, *device_weight, *device_unroll_matrix;
+    float *device_input, *device_output, *device_weight,*device_bias, *device_unroll_matrix;
     CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_bias, channel_out * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_unroll_matrix, height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float)));
 
     // Copy input and mask data to device
@@ -111,6 +128,10 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
 
     dim3 blockSize_multi(32, 32);
     dim3 gridSize_multi(( channel_out-1)/blockSize_multi.y + 1,(height_out * width_out-1)/blockSize_multi.x + 1,1);
+
+    
+    dim3 blockSize_bias(1024);
+    dim3 gridSize_bias((channel_out-1)/1024 + 1);
     
     //printf("block : 1024, grid : %d\n",(height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );    
 
@@ -122,7 +143,9 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
         matrix_multiplication_kernel<<<gridSize_multi,blockSize_multi>>>
                             (device_unroll_matrix,device_weight,device_output + i*channel_out * height_out * width_out
                             ,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
-        
+        add_bias_kernel<<<gridSize_bias,blockSize_bias>>>
+                            (height_out, width_out, channel_out,
+                            output_data,bias_data)
     }
 
     // Launch the kernel

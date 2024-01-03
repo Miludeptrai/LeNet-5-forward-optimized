@@ -13,11 +13,8 @@ void ConvKernel_none_optimize::forward(const Matrix &bottom)
     float *input_data = (float *)bottom.data();
     float *output_data = (float *)malloc(height_out * width_out * channel_out *n_sample * sizeof(float));//(float *)top.data();
     float *weight_data = (float *)weight.data();
+    float *bias_data = (float *)bias.data();
 
-    const int num_samples = n_sample;
-    const int input_channel = channel_in;
-    const int output_channel = channel_out;
-    const int kernel_height = height_kernel; // Assuming width_kernel is also K
 
 
     printf("%ld %ld \n",bottom.cols(),bottom.rows());
@@ -34,7 +31,7 @@ void ConvKernel_none_optimize::forward(const Matrix &bottom)
         //data_cols[i] = data_col;
         // conv by product
         Matrix result = data_col * weight;  // result: (hw_out, channel_out)
-        //result.rowwise() += bias.transpose();
+        result.rowwise() += bias.transpose();
         top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
     }
     
@@ -52,7 +49,7 @@ void ConvKernel_none_optimize::forward(const Matrix &bottom)
     // Start layer timer 
     kernel_none_optimize.cuda_conv_forward(n_sample,channel_in,  height_in, width_in,
                                     height_kernel, width_kernel, channel_out,
-                                    input_data, weight_data, output_data);
+                                    input_data, weight_data,bias_data, output_data);
 
     // Stop layer timer
     timer.Stop();
