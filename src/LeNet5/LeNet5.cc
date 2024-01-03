@@ -146,11 +146,11 @@ Network LeNet5_CUDA_TESTING(){
 
 Network LeNet5_CUDA_NONE_OPTIMIZE_QUAD(){
     Network dnn;
-    Layer* conv1 = new ConvKernel_none_optimize(1, 56, 56, 6, 5, 5, 1, 0, 0);
-    Layer* pool1 = new AvePooling(6, 52, 52, 2, 2, 2);
-    Layer* conv2 = new ConvKernel_none_optimize(6, 26, 26, 16, 5, 5, 1, 0, 0);
-    Layer* pool2 = new AvePooling(16, 22, 22, 2, 2, 2);
-    Layer* conv3 = new ConvKernel_none_optimize(16, 11, 11, 120, 11, 11, 1, 0, 0);
+    Layer* conv1 = new ConvKernel_none_optimize(1, 112, 112, 6, 17, 17, 1, 0, 0);
+    Layer* pool1 = new AvePooling(6, 96, 96, 2, 2, 2);
+    Layer* conv2 = new ConvKernel_none_optimize(6, 48, 48, 16, 17, 17, 1, 0, 0);
+    Layer* pool2 = new AvePooling(16, 32, 32, 2, 2, 2);
+    Layer* conv3 = new ConvKernel_none_optimize(16, 16, 16, 120, 16, 16, 1, 0, 0);
     Layer* fc4 = new FullyConnected(conv3->output_dim(), 84);
     //Layer* fc4 = new FullyConnected(120, 84);
     Layer* fc5 = new FullyConnected(84, 10);
@@ -181,11 +181,11 @@ Network LeNet5_CUDA_NONE_OPTIMIZE_QUAD(){
 }
 Network LeNet5_CUDA_CUDA_SIMPLE_QUAD(){
     Network dnn;
-    Layer* conv1 = new ConvKernel_simple(1, 56, 56, 6, 5, 5, 1, 0, 0);
-    Layer* pool1 = new AvePooling(6, 52, 52, 2, 2, 2);
-    Layer* conv2 = new ConvKernel_simple(6, 26, 26, 16, 5, 5, 1, 0, 0);
-    Layer* pool2 = new AvePooling(16, 22, 22, 2, 2, 2);
-    Layer* conv3 = new ConvKernel_simple(16, 11, 11, 120, 11, 11, 1, 0, 0);
+    Layer* conv1 = new ConvKernel_simple(1, 112, 112, 6, 17, 17, 1, 0, 0);
+    Layer* pool1 = new AvePooling(6, 96, 96, 2, 2, 2);
+    Layer* conv2 = new ConvKernel_simple(6, 48, 48, 16, 17, 17, 1, 0, 0);
+    Layer* pool2 = new AvePooling(16, 32, 32, 2, 2, 2);
+    Layer* conv3 = new ConvKernel_simple(16, 16, 16, 120, 16, 16, 1, 0, 0);
     Layer* fc4 = new FullyConnected(conv3->output_dim(), 84);
     //Layer* fc4 = new FullyConnected(120, 84);
     Layer* fc5 = new FullyConnected(84, 10);
@@ -212,5 +212,5 @@ Network LeNet5_CUDA_CUDA_SIMPLE_QUAD(){
     dnn.add_loss(loss);
 
 
-    return dnn;
+    return dnn;   
 }
