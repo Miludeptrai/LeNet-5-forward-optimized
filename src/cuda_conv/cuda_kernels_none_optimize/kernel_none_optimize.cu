@@ -41,6 +41,7 @@ __global__ void unroll_kernel_1(int channel_in, int height_in, int width_in, int
         }
     }
     //We dont use multi here, because, we cant sync whole grid 
+
 }
 __global__ void unroll_kernel_2(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
@@ -67,31 +68,24 @@ int t = blockIdx.x * blockDim.x + threadIdx.x; //
         }
     }
 }
-__global__ void matrix_multiplication_kernel(float* A, float* B, float* C, int m, int n, int k)
+
+
+__global__ void multi_weight_add_bias_kernel(float* unroll_matrix, float *weight_data, float* output_data,float* bias_data,
+                                                int height_unroll, int width_unroll,int channel_out)
 {
 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
 	int r = blockIdx.y * blockDim.y + threadIdx.y; 
-	if (r < m && c < k) {
+	if (r < height_unroll && c < channel_out) {
     float sum = 0 ;
-    for (int i = 0; i < n ; i++) { 
-      sum += A[i*m + r] * B[c*n + i];
+    for (int i = 0; i < width_unroll ; i++) { 
+      sum += unroll_matrix[i*height_unroll + r] * weight_data[c*width_unroll + i];
     }
-    C[c*m + r] = sum ; 
+    output_data[c*height_unroll + r] = sum + bias_data[c]; 
 
   } 
 }
 
-__global__ void add_bias_kernel(int height_out, int width_out, int channel_out,
-                            float* output_data, float* bias_data)
-{
-	int t = blockIdx.x * blockDim.x + threadIdx.x; //
-    int hw_out = height_out * width_out;
-    if (t<channel_out * hw_out){
-        float bias = bias_data[t/hw_out];
-        output_data[t] += bias;
-    }
 
-}
 
 
 __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int channel_in,  int height_in, int width_in,
@@ -126,10 +120,6 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     dim3 blockSize_multi(32, 32);
     dim3 gridSize_multi(( channel_out-1)/blockSize_multi.y + 1,(height_out * width_out-1)/blockSize_multi.x + 1,1);
 
-    
-    dim3 blockSize_bias(32);
-    dim3 gridSize_bias((height_out * width_out * channel_out-1)/32 + 1);
-    
     //printf("block : 1024, grid : %d\n",(height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );    
 
     for (int i = 0; i < n_samples; i ++) {
@@ -137,12 +127,10 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input + i*channel_in * height_in * width_in,  device_unroll_matrix);
-        matrix_multiplication_kernel<<<gridSize_multi,blockSize_multi>>>
-                            (device_unroll_matrix,device_weight,device_output + i*channel_out * height_out * width_out
+                            
+        multi_weight_add_bias_kernel<<<gridSize_multi,blockSize_multi>>>
+                            (device_unroll_matrix,device_weight,device_output + i*channel_out * height_out * width_out,device_bias
                             ,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
-        add_bias_kernel<<<gridSize_bias,blockSize_bias>>>
-                            (height_out, width_out, channel_out,
-                            device_output + i*channel_out * height_out * width_out,device_bias);
     }
 
     // Launch the kernel
