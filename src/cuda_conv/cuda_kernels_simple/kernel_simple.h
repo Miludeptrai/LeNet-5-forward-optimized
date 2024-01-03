@@ -12,9 +12,10 @@
 class Kernel_simple : public Kernel
 {
 public:
-    void conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,const float *bias_data,
-                               const int num_samples, const int output_channel, const int input_channel,
-                               const int height_in, const int width_in, const int kernel_height);
+
+    void cuda_conv_forward( int n_samples,  int channel_in,  int height_in, int width_in,
+                                    int height_kernel, int width_kernel,  int channel_out,
+                                     float *input_data,  float *weight_data,float *bias_data, float *output_data);
 };
 
 #endif

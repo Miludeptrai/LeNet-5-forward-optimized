@@ -34,7 +34,7 @@ void ConvKernel_simple::forward(const Matrix &bottom)
         //data_cols[i] = data_col;
         // conv by product
         Matrix result = data_col * weight;  // result: (hw_out, channel_out)
-        //result.rowwise() += bias.transpose();
+        result.rowwise() += bias.transpose();
         top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
     }
     
@@ -50,7 +50,7 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     // gpuInterface.insert_pre_barrier_kernel();
 
     // Start layer timer
-    kernel.conv_forward_gpu_full(output_data, input_data, weight_data,bias_data,
+    kernel.cuda_conv_forward(output_data, input_data, weight_data,bias_data,
                                  num_samples, output_channel, input_channel,
                                  height_in, width_in, kernel_height);
 

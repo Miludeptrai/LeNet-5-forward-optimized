@@ -23,20 +23,20 @@ __global__ void unroll_kernel_1(int channel_in, int height_in, int width_in, int
         int col_out = row_unroll % width_out;//
 
         //channel start position 
-        int a0 = c*(width_in*height_in);//
+        int start_c = c*(width_in*height_in);//
 
         //how many rows of the channel before this?
         int w_base =  c * width_kernel * height_kernel; //
         for (int p = 0; p < height_kernel; p++){ 
-            int a1 = ( row_out + p)*width_in; // 
+            int f_row = ( row_out + p)*width_in; // 
             for(int q = 0; q < width_kernel; q++){
-                int a2 =  col_out + q; //
+                int f_col =  col_out + q; //
                 int col_unroll =w_base + p * width_kernel + q; //+
 
                 //Attention, in spite of each channel (vector) store data in row-major, 
                 //But our output is a matrix, so we need to perform storing in col-major
                 //I hate this =.= 
-                X_unroll[col_unroll*height_unroll + row_unroll] = X[a0 + a1 + a2];
+                X_unroll[col_unroll*height_unroll + row_unroll] = X[start_c + f_row + f_col];
             }
         }
     }
