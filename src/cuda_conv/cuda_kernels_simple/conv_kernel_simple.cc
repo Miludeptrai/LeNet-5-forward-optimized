@@ -14,11 +14,6 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     float *weight_data = (float *)weight.data();
     float *bias_data = (float *)bias.data();
 
-    const int num_samples = n_sample;
-    const int input_channel = channel_in;
-    const int output_channel = channel_out;
-    const int kernel_height = height_kernel; // Assuming width_kernel is also K
-
 
     printf("%ld %ld \n",bottom.cols(),bottom.rows());
     printf("%d \n",height_out * width_out * channel_out);
@@ -50,9 +45,9 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     // gpuInterface.insert_pre_barrier_kernel();
 
     // Start layer timer
-    kernel.cuda_conv_forward(output_data, input_data, weight_data,bias_data,
-                                 num_samples, output_channel, input_channel,
-                                 height_in, width_in, kernel_height);
+    kernel.cuda_conv_forward(n_sample,channel_in,  height_in, width_in,
+                                    height_kernel, width_kernel, channel_out,
+                                    input_data, weight_data,bias_data, output_data);
 
     // Stop layer timer
     timer.Stop();

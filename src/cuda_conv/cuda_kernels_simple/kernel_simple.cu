@@ -6,10 +6,10 @@ __global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,i
                             int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
-    int batch_idx = blockIdx.x;
+    int batch_idx = blockIdx.z;
     int output_feature_idx = blockIdx.y;
-    int row_idx = blockIdx.z / width_out * TILE_WIDTH + threadIdx.y;
-    int col_idx = blockIdx.z % width_out * TILE_WIDTH + threadIdx.x;
+    int row_idx = blockIdx.x / width_out * TILE_WIDTH + threadIdx.y;
+    int col_idx = blockIdx.x % width_out * TILE_WIDTH + threadIdx.x;
     
     float accumulator =  bias_data[output_feature_idx];
 
@@ -66,7 +66,7 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     int width_grid = (width_out + TILE_WIDTH - 1) / TILE_WIDTH;
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 num_blocks_in_grid(n_samples, channel_out, Z);
+    dim3 num_blocks_in_grid(Z, channel_out,n_samples);
 
     // Launch the kernel
     conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
