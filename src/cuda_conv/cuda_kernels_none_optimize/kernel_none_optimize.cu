@@ -85,14 +85,10 @@ __global__ void add_bias_kernel(int height_out, int width_out, int channel_out,
                             float* output_data, float* bias_data)
 {
 	int t = blockIdx.x * blockDim.x + threadIdx.x; //
-    if (t<channel_out){
-        int bias = bias_data[t];
-        for (int c = 0 ;c<width_out ; c++){
-            for (int r=0;r<height_out;r++){
-                output_data[c*height_out + r] += bias;
-            }
-        }
-
+    int hw_out = height_out * width_out;
+    if (t<channel_out * hw_out){
+        float bias = bias_data[t/hw_out];
+        output_data[t] += bias;
     }
 
 }
@@ -106,7 +102,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     const int width_out = width_in - width_kernel + 1;
 
     // Allocate device memory
-    float *device_input, *device_output, *device_weight,*device_bias, *device_unroll_matrix;
+    float *device_input, *device_output, *device_weight,*device_bias, *device_unroll_matrix; 
     CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
@@ -116,6 +112,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     // Copy input and mask data to device
     CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_bias, bias_data, channel_out * sizeof(float), cudaMemcpyHostToDevice));
 
     // // Set the kernel dimensions and call the kernel
     // int height_grid = (height_out + TILE_WIDTH - 1) / TILE_WIDTH;
@@ -130,8 +127,8 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     dim3 gridSize_multi(( channel_out-1)/blockSize_multi.y + 1,(height_out * width_out-1)/blockSize_multi.x + 1,1);
 
     
-    dim3 blockSize_bias(1024);
-    dim3 gridSize_bias((channel_out-1)/1024 + 1);
+    dim3 blockSize_bias(32);
+    dim3 gridSize_bias((height_out * width_out * channel_out-1)/32 + 1);
     
     //printf("block : 1024, grid : %d\n",(height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );    
 
@@ -145,7 +142,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
                             ,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
         add_bias_kernel<<<gridSize_bias,blockSize_bias>>>
                             (height_out, width_out, channel_out,
-                            output_data,bias_data)
+                            device_output + i*channel_out * height_out * width_out,device_bias);
     }
 
     // Launch the kernel

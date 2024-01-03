@@ -2,7 +2,7 @@
 #define TILE_WIDTH 32
 
 
-__global__ void conv_forward_kernel(float *output, const float *input, const float *kernel,
+__global__ void conv_forward_kernel(float *output, const float *input, const float *kernel,const float *bias
                                     const int num_samples, const int output_channel, const int input_channel,
                                     const int height, const int width, const int kernel_size)
 {
@@ -14,7 +14,7 @@ __global__ void conv_forward_kernel(float *output, const float *input, const flo
     int row_idx = blockIdx.z / width_out * TILE_WIDTH + threadIdx.y;
     int col_idx = blockIdx.z % width_out * TILE_WIDTH + threadIdx.x;
     
-    float accumulator = 0.0f;
+    float accumulator =  bias[output_feature_idx];
 
     if (row_idx < height_out && col_idx < width_out)
     {
@@ -44,7 +44,7 @@ __global__ void conv_forward_kernel(float *output, const float *input, const flo
     }
 }
 
-__host__ void Kernel_simple::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,
+__host__ void Kernel_simple::conv_forward_gpu_full(float *output_data, const float *input_data, const float *weight_data,const float *bias_data,
                                             const int num_samples, const int output_channel, const int input_channel,
                                             const int height_in, const int width_in, const int kernel_height)
 {
@@ -52,14 +52,17 @@ __host__ void Kernel_simple::conv_forward_gpu_full(float *output_data, const flo
     const int width_out = width_in - kernel_height + 1;
 
     // Allocate device memory
-    float *device_input, *device_output, *device_weight;
+    float *device_input, *device_output, *device_weight,*device_bias;
     CHECK(cudaMalloc((void **)&device_input, num_samples * input_channel * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, num_samples * output_channel * height_out * width_out * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_weight, output_channel * input_channel * kernel_height * kernel_height * sizeof(float)));
+    CHECK(cudaMalloc((void **)&device_bias, output_channel * sizeof(float)));
+    CHECK(cudaMemcpy(device_bias, bias_data, output_channel * sizeof(float), cudaMemcpyHostToDevice));
 
     // Copy input and mask data to device
     CHECK(cudaMemcpy(device_input, input_data, num_samples * input_channel * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(device_weight, weight_data, output_channel * input_channel * kernel_height * kernel_height * sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(device_bias, bias_data, output_channel * sizeof(float), cudaMemcpyHostToDevice));
 
     // Set the kernel dimensions and call the kernel
     int height_grid = (height_out + TILE_WIDTH - 1) / TILE_WIDTH;
@@ -69,7 +72,7 @@ __host__ void Kernel_simple::conv_forward_gpu_full(float *output_data, const flo
     dim3 num_blocks_in_grid(num_samples, output_channel, Z);
 
     // Launch the kernel
-    conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
+    conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>(device_output, device_input, device_weight,device_bias, num_samples, output_channel, input_channel, height_in, width_in, kernel_height);
     CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host
