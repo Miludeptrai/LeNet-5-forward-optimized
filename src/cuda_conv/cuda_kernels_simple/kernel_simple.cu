@@ -6,7 +6,7 @@ __global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,i
                             int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
-    int batch_idx = blockIdx.z;
+    //int batch_idx = blockIdx.z;
     int output_feature_idx = blockIdx.y;
     int row_idx = blockIdx.x / width_out * TILE_WIDTH + threadIdx.y;
     int col_idx = blockIdx.x % width_out * TILE_WIDTH + threadIdx.x;
@@ -23,7 +23,7 @@ __global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,i
                 {
                     int input_row = row_idx + kernel_row;
                     int input_col = col_idx + kernel_col;
-                    accumulator += input_data[(batch_idx * (channel_in * height_in * width_in)) +
+                    accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
                                          (channel_in_idx * (height_in * width_in)) +
                                          (input_row * width_in) +
                                          input_col] *
@@ -34,7 +34,7 @@ __global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,i
                 }
             }
         }
-        output_data[(batch_idx * (channel_out * height_out * width_out)) +
+        output_data[//(batch_idx * (channel_out * height_out * width_out)) +
                (output_feature_idx * (height_out * width_out)) +
                (row_idx * width_out) +
                col_idx] = accumulator;
@@ -66,12 +66,15 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     int width_grid = (width_out + TILE_WIDTH - 1) / TILE_WIDTH;
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 num_blocks_in_grid(Z, channel_out,n_samples);
+    dim3 num_blocks_in_grid(Z, channel_out,1);
 
     // Launch the kernel
-    conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
+    
+    for (int i = 0; i < n_samples; i ++) {
+        conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
                              width_kernel,  height_out,  width_out,  channel_out,
-                            device_input,  device_weight,device_bias, device_output);
+                            device_input + i*channel_in * height_in * width_in,  device_weight,device_bias, device_output + i*channel_out * height_out * width_out);
+    }
     CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host
