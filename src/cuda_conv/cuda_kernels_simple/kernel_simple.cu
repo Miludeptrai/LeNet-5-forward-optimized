@@ -2,7 +2,7 @@
 #define TILE_WIDTH 32
 
 
-__global__ void conv_forward_kernel(float *output, const float *input, const float *kernel,const float *bias
+__global__ void conv_forward_kernel(float *output, const float *input, const float *kernel,const float *bias,
                                     const int num_samples, const int output_channel, const int input_channel,
                                     const int height, const int width, const int kernel_size)
 {

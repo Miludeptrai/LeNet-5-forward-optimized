@@ -12,6 +12,7 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     float *input_data = (float *)bottom.data();
     float *output_data = (float *)malloc(height_out * width_out * channel_out *n_sample * sizeof(float));//(float *)top.data();
     float *weight_data = (float *)weight.data();
+    float *bias_data = (float *)bias.data();
 
     const int num_samples = n_sample;
     const int input_channel = channel_in;
@@ -49,7 +50,7 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     // gpuInterface.insert_pre_barrier_kernel();
 
     // Start layer timer
-    kernel.conv_forward_gpu_full(output_data, input_data, weight_data,
+    kernel.conv_forward_gpu_full(output_data, input_data, weight_data,bias_data,
                                  num_samples, output_channel, input_channel,
                                  height_in, width_in, kernel_height);
 
