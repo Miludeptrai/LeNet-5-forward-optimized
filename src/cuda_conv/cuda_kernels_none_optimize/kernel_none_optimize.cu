@@ -61,12 +61,10 @@ int t = blockIdx.x * blockDim.x + threadIdx.x; //
         int ith = t % hw_kernel;//
         
         int a0 = c*(width_in*height_in);
-        int *i_row = new int;
-        int *i_col = new int;
         for (int i =0 ;i <height_unroll ; i++){
-            *i_row = i/width_out + ith/width_kernel;
-            *i_col = i%width_out + ith%width_kernel;
-            unroll_matrix[ t*height_unroll+ i] = input_data[a0 + (*i_row)*width_in + *i_col];
+            int i_row = i/width_out + ith/width_kernel;
+            int i_col = i%width_out + ith%width_kernel;
+            unroll_matrix[ t*height_unroll+ i] = input_data[a0 + i_row*width_in + i_col];
         }
     }
 }
@@ -125,7 +123,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     //printf("block : 1024, grid : %d\n",(height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );    
 
     for (int i = 0; i < n_samples; i ++) {
-        unroll_kernel_1<<<gridSize_unroll, blockSize_unroll>>>
+        unroll_kernel_2<<<gridSize_unroll, blockSize_unroll>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input + i*channel_in * height_in * width_in,  device_unroll_matrix);
