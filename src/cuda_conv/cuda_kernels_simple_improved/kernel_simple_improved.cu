@@ -10,9 +10,9 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     int row_idx = blockIdx.x / width_out * TILE_WIDTH + threadIdx.y;
     int col_idx = blockIdx.x % width_out * TILE_WIDTH + threadIdx.x;
     
-    __shared__ float temp_input[(TILE_WIDTH + height_kernel) *
-                                (TILE_WIDTH + width_kernel)];
-    __shared__ float temp_kernel[height_kernel * width_kernel];
+    // __shared__ float temp_input[(TILE_WIDTH + height_kernel) *
+    //                             (TILE_WIDTH + width_kernel)];
+    // __shared__ float temp_kernel[height_kernel * width_kernel];
 
     int r = threadIdx.y;
     int c = threadIdx.x;
