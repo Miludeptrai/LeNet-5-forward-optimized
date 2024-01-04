@@ -1,8 +1,7 @@
-#include "kernel_simple.h"
+#include "kernel_simple_improved.h"
 #define TILE_WIDTH 32
 
-
-__global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,int height_kernel, 
+__global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in,int height_kernel, 
                             int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
@@ -40,7 +39,7 @@ __global__ void conv_forward_kernel(int channel_in,int height_in, int width_in,i
 }
 
                                      
-__host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  int height_in, int width_in,
+__host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int channel_in,  int height_in, int width_in,
                                     int height_kernel, int width_kernel,  int channel_out,
                                      float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
@@ -69,7 +68,7 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     // Launch the kernel
     
     for (int i = 0; i < n_samples; i ++) {
-        conv_forward_kernel<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
+        conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
                              width_kernel,  height_out,  width_out,  channel_out,
                             device_input + i*channel_in * height_in * width_in,  device_weight,device_bias, device_output + i*channel_out * height_out * width_out);
     }

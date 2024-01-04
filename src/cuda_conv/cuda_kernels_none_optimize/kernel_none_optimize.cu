@@ -70,7 +70,7 @@ int t = blockIdx.x * blockDim.x + threadIdx.x; //
 }
 
 
-__global__ void multi_weight_add_bias_kernel(float* unroll_matrix, float *weight_data, float* output_data,float* bias_data,
+__global__ void multi_weight_add_bias_kernel_1(float* unroll_matrix, float *weight_data, float* output_data,float* bias_data,
                                                 int height_unroll, int width_unroll,int channel_out)
 {
 	int c = blockIdx.x * blockDim.x + threadIdx.x; 
@@ -128,7 +128,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
                              width_kernel,  height_out,  width_out, 
                             device_input + i*channel_in * height_in * width_in,  device_unroll_matrix);
                             
-        multi_weight_add_bias_kernel<<<gridSize_multi,blockSize_multi>>>
+        multi_weight_add_bias_kernel_1<<<gridSize_multi,blockSize_multi>>>
                             (device_unroll_matrix,device_weight,device_output + i*channel_out * height_out * width_out,device_bias
                             ,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
     }
