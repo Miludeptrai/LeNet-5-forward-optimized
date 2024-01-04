@@ -10,27 +10,43 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     int row_idx = blockIdx.x / width_out * TILE_WIDTH + threadIdx.y;
     int col_idx = blockIdx.x % width_out * TILE_WIDTH + threadIdx.x;
     
+    __shared__ float temp_input[(TILE_WIDTH + height_kernel) *
+                                (TILE_WIDTH + width_kernel)];
+    __shared__ float temp_kernel[height_kernel * width_kernel]
+
+    int r = threadIdx.y;
+    int c = threadIdx.x;
+
+
+    
+
     float accumulator =  bias_data[output_feature_idx];
+
+
 
     if (row_idx < height_out && col_idx < width_out)
     {
         for (int channel_in_idx = 0; channel_in_idx < channel_in; channel_in_idx++)
         {
-            for (int kernel_row = 0; kernel_row < height_kernel; kernel_row++)
+            for (int w_row = 0; w_row < height_kernel; w_row++)
             {
-                for (int kernel_col = 0; kernel_col < width_kernel; kernel_col++)
+                for (int w_col = 0; w_col < width_kernel; w_col++)
                 {
                     accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
                                          (channel_in_idx * (height_in * width_in)) +
-                                         ((row_idx + kernel_row) * width_in) +
-                                         col_idx + kernel_col] *
+                                         ((row_idx + w_row) * width_in) +
+                                         col_idx + w_col] *
                                    weight_data[(output_feature_idx * (channel_in * height_kernel * width_kernel)) +
                                           (channel_in_idx * (height_kernel * width_kernel)) +
-                                          (kernel_row * width_kernel) +
-                                          kernel_col];
+                                          (w_row * width_kernel) +
+                                          w_col];
                 }
             }
         }
+    }
+    __syncthreads();
+    if (row_idx < height_out && col_idx < width_out)
+    {
         output_data[//(batch_idx * (channel_out * height_out * width_out)) +
                (output_feature_idx * (height_out * width_out)) +
                (row_idx * width_out) +
@@ -59,8 +75,8 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     CHECK(cudaMemcpy(device_bias, bias_data, channel_out * sizeof(float), cudaMemcpyHostToDevice));
 
     // Set the kernel dimensions and call the kernel
-    int height_grid = (height_out + TILE_WIDTH - 1) / TILE_WIDTH;
-    int width_grid = (width_out + TILE_WIDTH - 1) / TILE_WIDTH;
+    int height_grid = (height_out - 1) / TILE_WIDTH + 1;
+    int width_grid = (width_out - 1) / TILE_WIDTH + 1;
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
     dim3 num_blocks_in_grid(Z, channel_out,1);
