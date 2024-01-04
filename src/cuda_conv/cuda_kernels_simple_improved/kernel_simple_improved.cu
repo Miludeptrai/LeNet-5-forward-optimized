@@ -1,8 +1,8 @@
 #include "kernel_simple_improved.h"
 #define TILE_WIDTH 32
 
-__global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in,int height_kernel, 
-                            int width_kernel, int height_out, int width_out, int channel_out,
+__global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in,const int height_kernel, 
+                            const int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
     //int batch_idx = blockIdx.z;
