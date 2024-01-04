@@ -69,7 +69,7 @@ int main1() {
   //     dnn.update(opt);
   //   }
   //   // test
-    dataset.test_data.resize(112*112,10000/16)
+    dataset.test_data.resize(112*112,10000/16);
     dnn.forward(dataset.test_data);
   //   float acc = compute_accuracy(dnn.output(), dataset.test_labels);
   //   std::cout << std::endl;
