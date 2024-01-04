@@ -7,35 +7,35 @@ __global__ void conv_forward_kernel_1(int channel_in,int height_in, int width_in
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
     //int batch_idx = blockIdx.z;
-    int output_feature_idx = blockIdx.y;
+    int out_channel_ith = blockIdx.y;
     int width_grid = (width_out - 1) / TILE_WIDTH + 1 ;
 
     int row_idx = blockIdx.x / width_grid * TILE_WIDTH + threadIdx.y;
     int col_idx = blockIdx.x % width_grid * TILE_WIDTH + threadIdx.x;
     
-    float accumulator =  bias_data[output_feature_idx];
+    float accumulator =  bias_data[out_channel_ith];
 
     if (row_idx < height_out && col_idx < width_out)
     {
-        for (int channel_in_idx = 0; channel_in_idx < channel_in; channel_in_idx++)
+        for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++)
         {
             for (int w_row = 0; w_row < height_kernel; w_row++)
             {
                 for (int w_col = 0; w_col < width_kernel; w_col++)
                 {
                     accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
-                                         (channel_in_idx * (height_in * width_in)) +
+                                         (in_channel_ith * (height_in * width_in)) +
                                          ((row_idx + w_row) * width_in) +
                                          col_idx + w_col] *
-                                   weight_data[(output_feature_idx * (channel_in * height_kernel * width_kernel)) +
-                                          (channel_in_idx * (height_kernel * width_kernel)) +
+                                   weight_data[(out_channel_ith * (channel_in * height_kernel * width_kernel)) +
+                                          (in_channel_ith * (height_kernel * width_kernel)) +
                                           (w_row * width_kernel) +
                                           w_col];
                 }
             }
         }
         output_data[//(batch_idx * (channel_out * height_out * width_out)) +
-               (output_feature_idx * (height_out * width_out)) +
+               (out_channel_ith * (height_out * width_out)) +
                (row_idx * width_out) +
                col_idx] = accumulator;
     }

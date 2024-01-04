@@ -6,13 +6,13 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
     //int batch_idx = blockIdx.z;
-    int output_feature_idx = blockIdx.y;
-    int row_idx = blockIdx.x / width_out * TILE_WIDTH + threadIdx.y;
-    int col_idx = blockIdx.x % width_out * TILE_WIDTH + threadIdx.x;
+    int out_channel_ith = blockIdx.y;
+    int width_grid = (width_out - 1) / TILE_WIDTH + 1 ;
+
+    int row_idx = blockIdx.x / width_grid * TILE_WIDTH + threadIdx.y;
+    int col_idx = blockIdx.x % width_grid * TILE_WIDTH + threadIdx.x;
     
-    // __shared__ float temp_input[(TILE_WIDTH + height_kernel) *
-    //                             (TILE_WIDTH + width_kernel)];
-    // __shared__ float temp_kernel[height_kernel * width_kernel];
+    extern __shared__ float s_m[];
 
     int r = threadIdx.y;
     int c = threadIdx.x;
@@ -20,24 +20,24 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
 
     
 
-    float accumulator =  bias_data[output_feature_idx];
+    float accumulator =  bias_data[out_channel_ith];
 
 
 
     if (row_idx < height_out && col_idx < width_out)
     {
-        for (int channel_in_idx = 0; channel_in_idx < channel_in; channel_in_idx++)
+        for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++)
         {
             for (int w_row = 0; w_row < height_kernel; w_row++)
             {
                 for (int w_col = 0; w_col < width_kernel; w_col++)
                 {
                     accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
-                                         (channel_in_idx * (height_in * width_in)) +
+                                         (in_channel_ith * (height_in * width_in)) +
                                          ((row_idx + w_row) * width_in) +
                                          col_idx + w_col] *
-                                   weight_data[(output_feature_idx * (channel_in * height_kernel * width_kernel)) +
-                                          (channel_in_idx * (height_kernel * width_kernel)) +
+                                   weight_data[(out_channel_ith * (channel_in * height_kernel * width_kernel)) +
+                                          (in_channel_ith * (height_kernel * width_kernel)) +
                                           (w_row * width_kernel) +
                                           w_col];
                 }
@@ -48,7 +48,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     if (row_idx < height_out && col_idx < width_out)
     {
         output_data[//(batch_idx * (channel_out * height_out * width_out)) +
-               (output_feature_idx * (height_out * width_out)) +
+               (out_channel_ith * (height_out * width_out)) +
                (row_idx * width_out) +
                col_idx] = accumulator;
     }
@@ -82,9 +82,9 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     dim3 num_blocks_in_grid(Z, channel_out,1);
 
     // Launch the kernel
-    
+    int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float)
     for (int i = 0; i < n_samples; i ++) {
-        conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
+        conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block,share_mem_size>>>( channel_in, height_in,  width_in, height_kernel, 
                              width_kernel,  height_out,  width_out,  channel_out,
                             device_input + i*channel_in * height_in * width_in,  device_weight,device_bias, device_output + i*channel_out * height_out * width_out);
     }
