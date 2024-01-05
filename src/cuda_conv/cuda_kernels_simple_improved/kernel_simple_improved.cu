@@ -28,6 +28,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     extern __shared__ float s_m[];
     float * temp_input = (float*)&s_m[0];
 
+    //Here we decided to choose use constant or shared mem for weight
     float * temp_kernel ;
     int weight_lenght = channel_out * channel_in * height_kernel * width_kernel ; 
     if ( weight_lenght <= MAX_CONSTANT_SIZE) {
@@ -44,6 +45,8 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     float accumulator =  bias_data[out_channel_ith];
 
     //loop each channel 
+    //if use constant skip_weight = in_channel_ith
+    //and if not, the thread loads only each channel layer kernel, we need to set it 0
     int i,j, skip_weight;
     for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++){
         //read kernal for its channel 
@@ -105,15 +108,11 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     //float *device_input, *device_output;
     float *device_weight,*device_bias;
 
-    // CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
-    // CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
-    // // Copy input and mask data to device
-    // CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
-
-
     CHECK(cudaMalloc((void **)&device_bias, channel_out * sizeof(float)));
     CHECK(cudaMemcpy(device_bias, bias_data, channel_out * sizeof(float), cudaMemcpyHostToDevice));
 
+    //As we can see, we can use constant to store weight, but what if the size is too long? 
+    //so, just check, and in our kernel, we must check again and decide which loctation we will use
     if (channel_out * channel_in * height_kernel * width_kernel <= MAX_CONSTANT_SIZE){
         printf("Using constant!\n");
         CHECK(cudaMemcpyToSymbol(dc_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
@@ -123,7 +122,8 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     }
 
 
-
+    //what is this? yes we have n_samples images, but in some case, we cannot load them all into GPU mem,
+    //we seperate them to each batch, an here I set it 32 
     int batch_size = 32;
     // setting cuda streams
     int nStreams = 4;
@@ -136,10 +136,12 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
     dim3 num_blocks_in_grid(Z, channel_out,batch_size);
+
     int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float);
 
     for (int i = 0; i < nStreams; i++){
 		CHECK(cudaStreamCreate(&streams[i]));    
+        //Each stream use its GPU mem, and no new GPU location
         CHECK(cudaMalloc((void **)&device_input[i], batch_size * channel_in * height_in * width_in * sizeof(float)));
         CHECK(cudaMalloc((void **)&device_output[i], batch_size * channel_out * height_out * width_out * sizeof(float)));
     }
@@ -149,6 +151,7 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
             int start_in = i * channel_in * height_in * width_in;
             int start_out = i * channel_out * height_out * width_out;
             
+            //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, batch_size * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
             conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block,share_mem_size>>>( channel_in, height_in,  width_in, height_kernel, 
@@ -167,43 +170,10 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     for (int i = 0; i < nStreams; i++){
         CHECK(cudaStreamSynchronize(streams[i]));
         cudaStreamDestroy(streams[i]);
-
+        //delete each stream GPU mem 
         CHECK(cudaFree(device_input[i]));
         CHECK(cudaFree(device_output[i]));
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-    // // Launch the kernel
-    // for (int i = 0; i < n_samples; i ++) {
-    //     conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block,share_mem_size>>>( channel_in, height_in,  width_in, height_kernel, 
-    //                          width_kernel,  height_out,  width_out,  channel_out,
-    //                         device_input + i*channel_in * height_in * width_in,  device_weight,device_bias, device_output + i*channel_out * height_out * width_out);
-    // }
-    // CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
-
-    // // Copy the output back to host
-    // CHECK(cudaMemcpy(output_data, device_output, n_samples * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
-
-    // // Free device memory
-    // CHECK(cudaFree(device_input));
-    // CHECK(cudaFree(device_output));
 
     CHECK(cudaFree(device_bias));
     if (channel_out * channel_in * height_kernel * width_kernel > MAX_CONSTANT_SIZE){
