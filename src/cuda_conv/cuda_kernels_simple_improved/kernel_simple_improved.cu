@@ -98,7 +98,7 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     dim3 num_blocks_in_grid(Z, channel_out,1);
 
     // Launch the kernel
-    int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float)
+    int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float);
     for (int i = 0; i < n_samples; i ++) {
         conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block,share_mem_size>>>( channel_in, height_in,  width_in, height_kernel, 
                              width_kernel,  height_out,  width_out,  channel_out,
