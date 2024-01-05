@@ -27,7 +27,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     //this s_m size : (TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel
     extern __shared__ float s_m[];
     float * temp_input = (float*)&s_m[0];
-    float * temp_kernel = (float*)&s_m[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
+    float * temp_kernel = dc_weight//(float*)&s_m[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
 
     //local 
     int r = threadIdx.y;
@@ -63,7 +63,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         for ( i = 0 ;i<height_kernel; i++){
             for ( j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
-                    accumulator += temp_input[(i+r)*width_tiled + j+c] * dc_weight[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                    accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[out_channel_ith*(channel_in*width_kernel*height_kernel) +
                                                                         in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
                 }
             }
