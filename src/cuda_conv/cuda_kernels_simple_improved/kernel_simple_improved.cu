@@ -1,48 +1,64 @@
 #include "kernel_simple_improved.h"
 #define TILE_WIDTH 32
 
-__global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in,const int height_kernel, 
-                            const int width_kernel, int height_out, int width_out, int channel_out,
+__global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in, int height_kernel, 
+                            int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
     //int batch_idx = blockIdx.z;
     int out_channel_ith = blockIdx.y;
     int width_grid = (width_out - 1) / TILE_WIDTH + 1 ;
 
-    int row_idx = blockIdx.x / width_grid * TILE_WIDTH + threadIdx.y;
-    int col_idx = blockIdx.x % width_grid * TILE_WIDTH + threadIdx.x;
-    
-    extern __shared__ float s_m[];
+    //remember that gridSize.x is used to perform height_out*witdh_out pixel, but in one demension
+    //we need to see it in 2D instead of 1D
+    //and we caculate where the current block point to
+    int block_y = blockIdx.x / width_grid;
+    int block_x = blockIdx.x % width_grid;
 
+    //where this thread point to in 
+    int row_idx = block_y * TILE_WIDTH + threadIdx.y;
+    int col_idx = block_x * TILE_WIDTH + threadIdx.x;
+    
+    //this s_m size : (TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel
+    extern __shared__ float s_m[];
+    float * temp_input = (float*)&shmem[0];
+    float * temp_kernel = (float*)&shmem[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
+
+    //local 
     int r = threadIdx.y;
     int c = threadIdx.x;
 
 
-    
-
     float accumulator =  bias_data[out_channel_ith];
 
-
-
-    if (row_idx < height_out && col_idx < width_out)
-    {
-        for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++)
-        {
-            for (int w_row = 0; w_row < height_kernel; w_row++)
-            {
-                for (int w_col = 0; w_col < width_kernel; w_col++)
-                {
-                    accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
-                                         (in_channel_ith * (height_in * width_in)) +
-                                         ((row_idx + w_row) * width_in) +
-                                         col_idx + w_col] *
-                                   weight_data[(out_channel_ith * (channel_in * height_kernel * width_kernel)) +
-                                          (in_channel_ith * (height_kernel * width_kernel)) +
-                                          (w_row * width_kernel) +
-                                          w_col];
+    //loop each channel 
+    for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++){
+        //read kernal for its channel 
+        for (int i = r ;i<height_kernel; i+= TILE_WIDTH){
+            for (int j = c ; j < width_kernel; j+= TILE_WIDTH){
+                temp_kernel[i*width_kernel + j] = weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                                                            in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
+            }
+        }
+        //load data to shared mem 
+        for (int i = r ;i<height_kernel+ TILE_WIDTH -1; i+= TILE_WIDTH){
+            for (int j = c ; j < width_kernel + TILE_WIDTH -1 ; j+= TILE_WIDTH){
+                if(block_y * TILE_WIDTH  + i < height_in && block_x * TILE_WIDTH + j < width_in)
+                    temp_input[i*(width_kernel+ TILE_WIDTH -1) + j] = input_data[//batch_idx * (channel_in*width_in*height_in)
+                                                            in_channel_ith*(width_in*height_in) + 
+                                                            (block_y * TILE_WIDTH  + i)*width_in + block_x * TILE_WIDTH + j];
+            }
+        }
+        __syncthreads();
+        //calculate 
+        for (int i = 0 ;i<height_kernel; i++){
+            for (int j = 0 ; j < width_kernel; j++){
+                if (row_idx < height_out && col_idx < width_out){
+                    accumulator = += temp_input[(i+r)*(width_kernel+ TILE_WIDTH -1) + j+c] * temp_kernel[i*width_kernel + j];
                 }
             }
         }
+        __syncthreads();
     }
     __syncthreads();
     if (row_idx < height_out && col_idx < width_out)
