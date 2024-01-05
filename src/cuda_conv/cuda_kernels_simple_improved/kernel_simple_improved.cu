@@ -21,8 +21,8 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     
     //this s_m size : (TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel
     extern __shared__ float s_m[];
-    float * temp_input = (float*)&shmem[0];
-    float * temp_kernel = (float*)&shmem[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
+    float * temp_input = (float*)&s_m[0];
+    float * temp_kernel = (float*)&s_m[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
 
     //local 
     int r = threadIdx.y;
