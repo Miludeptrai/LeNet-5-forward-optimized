@@ -43,17 +43,18 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         //load data to shared mem 
         for (int i = r ;i<height_kernel+ TILE_WIDTH -1; i+= TILE_WIDTH){
             for (int j = c ; j < width_kernel + TILE_WIDTH -1 ; j+= TILE_WIDTH){
-                if(block_y * TILE_WIDTH  + i < height_in && block_x * TILE_WIDTH + j < width_in)
+                if(block_y * TILE_WIDTH  + i < height_in && block_x * TILE_WIDTH + j < width_in){
                     temp_input[i*(width_kernel+ TILE_WIDTH -1) + j] = input_data[//batch_idx * (channel_in*width_in*height_in)
                                                             in_channel_ith*(width_in*height_in) + 
                                                             (block_y * TILE_WIDTH  + i)*width_in + block_x * TILE_WIDTH + j];
+                }
             }
         }
         __syncthreads();
         //calculate 
         for (int i = 0 ;i<height_kernel; i++){
             for (int j = 0 ; j < width_kernel; j++){
-                if (row_idx < height_out && col_idx < width_out){
+                if (row_idx < height_out && col_idx < width_out) {
                     accumulator = += temp_input[(i+r)*(width_kernel+ TILE_WIDTH -1) + j+c] * temp_kernel[i*width_kernel + j];
                 }
             }
