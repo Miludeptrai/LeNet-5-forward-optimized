@@ -64,7 +64,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         for ( i = r ;i<height_kernel+ TILE_WIDTH -1; i+= TILE_WIDTH){
             for ( j = c ; j < width_tiled ; j+= TILE_WIDTH){
                 if(block_start_y  + i < height_in && block_start_x + j < width_in){
-                    temp_input[i*width_tiled + j] = input_data[batch_idx * (channel_in*width_in*height_in)
+                    temp_input[i*width_tiled + j] = input_data[batch_idx * (channel_in*width_in*height_in) +
                                                             in_channel_ith*(width_in*height_in) + 
                                                             (block_start_y  + i)*width_in + block_start_x + j];
                 }
@@ -135,11 +135,13 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, batch_size);
     dim3 num_blocks_in_grid(Z, channel_out,batch_size);
+    int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float);
 
-    for (int i = 0; i < nStreams; i++)
+    for (int i = 0; i < nStreams; i++){
 		CHECK(cudaStreamCreate(&streams[i]));    
         CHECK(cudaMalloc((void **)&device_input[i], batch_size * channel_in * height_in * width_in * sizeof(float)));
         CHECK(cudaMalloc((void **)&device_output[i], batch_size * channel_out * height_out * width_out * sizeof(float)));
+    }
     // loop through each sample
     for (int stream = 0; stream < nStreams; stream++){
         for (int i = stream * batch_size; i < n_samples; i+=nStreams*batch_size) {
@@ -188,7 +190,6 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
 
 
     // // Launch the kernel
-    // int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float);
     // for (int i = 0; i < n_samples; i ++) {
     //     conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block,share_mem_size>>>( channel_in, height_in,  width_in, height_kernel, 
     //                          width_kernel,  height_out,  width_out,  channel_out,
