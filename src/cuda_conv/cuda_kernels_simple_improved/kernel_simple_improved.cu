@@ -44,16 +44,21 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     float accumulator =  bias_data[out_channel_ith];
 
     //loop each channel 
-    int i,j;
+    int i,j, skip_weight;
     for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++){
         //read kernal for its channel 
 
-        // for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
-        //     for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
-        //         temp_kernel[i*width_kernel + j] = weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
-        //                                                     in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
-        //     }
-        // }
+        if ( weight_lenght <= MAX_CONSTANT_SIZE) {
+            skip_weight = in_channel_ith;
+        }else{
+            for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
+                for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
+                    temp_kernel[i*width_kernel + j] = weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                                                                in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
+                }
+            }
+            skip_weight = 0;
+        }
 
         //load data to shared mem 
         for ( i = r ;i<height_kernel+ TILE_WIDTH -1; i+= TILE_WIDTH){
@@ -71,7 +76,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
             for ( j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
                     accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[
-                                                                        in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
+                                                                        skip_weight*(width_kernel*height_kernel) + i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
                 }
             }
         }
