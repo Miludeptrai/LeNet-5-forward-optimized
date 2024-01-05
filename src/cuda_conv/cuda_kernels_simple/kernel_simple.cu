@@ -6,7 +6,7 @@ __global__ void conv_forward_kernel_1(int channel_in,int height_in, int width_in
                             int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
 {
-    //int batch_idx = blockIdx.z;
+    int batch_idx = blockIdx.z;
     int out_channel_ith = blockIdx.y;
     int width_grid = (width_out - 1) / TILE_WIDTH + 1 ;
 
@@ -23,7 +23,7 @@ __global__ void conv_forward_kernel_1(int channel_in,int height_in, int width_in
             {
                 for (int w_col = 0; w_col < width_kernel; w_col++)
                 {
-                    accumulator += input_data[//(batch_idx * (channel_in * height_in * width_in)) +
+                    accumulator += input_data[(batch_idx * (channel_in * height_in * width_in)) +
                                          (in_channel_ith * (height_in * width_in)) +
                                          ((row_idx + w_row) * width_in) +
                                          col_idx + w_col] *
@@ -34,7 +34,7 @@ __global__ void conv_forward_kernel_1(int channel_in,int height_in, int width_in
                 }
             }
         }
-        output_data[//(batch_idx * (channel_out * height_out * width_out)) +
+        output_data[(batch_idx * (channel_out * height_out * width_out)) +
                (out_channel_ith * (height_out * width_out)) +
                (row_idx * width_out) +
                col_idx] = accumulator;
@@ -66,15 +66,11 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     int width_grid = (width_out - 1) / TILE_WIDTH + 1;
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 num_blocks_in_grid(Z, channel_out,1);
-
-    // Launch the kernel
-    
-    for (int i = 0; i < n_samples; i ++) {
-        conv_forward_kernel_1<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
+    dim3 num_blocks_in_grid(Z, channel_out,n_samples);
+    conv_forward_kernel_1<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
                              width_kernel,  height_out,  width_out,  channel_out,
-                            device_input + i*channel_in * height_in * width_in,  device_weight,device_bias, device_output + i*channel_out * height_out * width_out);
-    }
+                            device_input,  device_weight,device_bias, device_output);
+
     CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host
