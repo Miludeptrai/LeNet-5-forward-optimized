@@ -53,7 +53,8 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         }else{
             for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
                 for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
-                    temp_kernel[i*width_kernel + j] = weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                    temp_kernel[i*width_kernel + j] = weight_data[
+                                                                out_channel_ith*(channel_in*width_kernel*height_kernel) +
                                                                 in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
                 }
             }
@@ -145,6 +146,7 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     // loop through each sample
     for (int stream = 0; stream < nStreams; stream++){
         for (int i = stream * batch_size; i < n_samples; i+=nStreams*batch_size) {
+            printf("i=%d\n",i)
             int start_in = i * channel_in * height_in * width_in;
             int start_out = i * channel_out * height_out * width_out;
             
