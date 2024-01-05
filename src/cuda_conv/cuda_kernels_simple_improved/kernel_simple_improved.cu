@@ -148,16 +148,18 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     // loop through each sample
     for (int stream = 0; stream < nStreams; stream++){
         for (int i = stream * batch_size; i < n_samples; i+=nStreams*batch_size) {
+            //There is a problem. Most of time, the final batch dont have enough image, will it cause error?
+            //The answer is no, because there are still some images from batch before the last
             int start_in = i * channel_in * height_in * width_in;
             int start_out = i * channel_out * height_out * width_out;
             
             //copy the data to correct stream mem 
-            CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, batch_size * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
+            CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
             conv_forward_kernel_2<<<num_blocks_in_grid, num_threads_per_block,share_mem_size>>>( channel_in, height_in,  width_in, height_kernel, 
                                 width_kernel,  height_out,  width_out,  channel_out,
                                 device_input[stream],  device_weight,device_bias, device_output[stream]);
-            CHECK(cudaMemcpyAsync(output_data + start_out, device_output[stream], batch_size * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost, streams[stream]));
+            CHECK(cudaMemcpyAsync(output_data + start_out, device_output[stream], min(batch_size,n_samples-i) * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost, streams[stream]));
         }
     }
     cudaError_t errSync = cudaGetLastError();
