@@ -88,7 +88,7 @@ int main2() {
   std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
   // dnn
   Network dnn = LeNet5_CUDA_NONE_OPTIMIZE_QUAD();
-  dataset.test_data.resize(112*112, 10000/16)
+  dataset.test_data.resize(112*112, 10000/16);
     dnn.forward(dataset.test_data);
   return 0;
 }
