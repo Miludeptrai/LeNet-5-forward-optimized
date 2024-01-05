@@ -146,7 +146,6 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     // loop through each sample
     for (int stream = 0; stream < nStreams; stream++){
         for (int i = stream * batch_size; i < n_samples; i+=nStreams*batch_size) {
-            printf("i=%d\n",i)
             int start_in = i * channel_in * height_in * width_in;
             int start_out = i * channel_out * height_out * width_out;
             
