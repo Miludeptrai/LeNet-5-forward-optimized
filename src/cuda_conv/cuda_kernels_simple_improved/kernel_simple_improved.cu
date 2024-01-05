@@ -55,7 +55,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         for (int i = 0 ;i<height_kernel; i++){
             for (int j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
-                    accumulator = += temp_input[(i+r)*(width_kernel+ TILE_WIDTH -1) + j+c] * temp_kernel[i*width_kernel + j];
+                    accumulator += temp_input[(i+r)*(width_kernel+ TILE_WIDTH -1) + j+c] * temp_kernel[i*width_kernel + j];
                 }
             }
         }
