@@ -75,7 +75,7 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
                              width_kernel,  height_out,  width_out,  channel_out,
                             device_input + i*channel_in * height_in * width_in,  device_weight,device_bias, device_output + i*channel_out * height_out * width_out);
     }
-    //CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
+    CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
 
     // Copy the output back to host
     CHECK(cudaMemcpy(output_data, device_output, n_samples * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
