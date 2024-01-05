@@ -27,7 +27,14 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     //this s_m size : (TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel
     extern __shared__ float s_m[];
     float * temp_input = (float*)&s_m[0];
-    float * temp_kernel = dc_weight;//(float*)&s_m[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
+
+    float * temp_kernel ;
+    int weight_lenght = channel_out * channel_in * height_kernel * width_kernel ; 
+    if ( weight_lenght <= MAX_CONSTANT_SIZE) {
+        temp_kernel= dc_weight + out_channel_ith*(channel_in*width_kernel*height_kernel);//
+    }else{
+        temp_kernel = (float*)&s_m[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
+    }
 
     //local 
     int r = threadIdx.y;
@@ -63,7 +70,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         for ( i = 0 ;i<height_kernel; i++){
             for ( j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
-                    accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                    accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[
                                                                         in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
                 }
             }
@@ -92,16 +99,16 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     float *device_input, *device_output, *device_weight,*device_bias;
     CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
-    if (channel_out * channel_in * height_kernel * width_kernel < MAX_CONSTANT_SIZE){
+    CHECK(cudaMalloc((void **)&device_bias, channel_out * sizeof(float)));
+
+    if (channel_out * channel_in * height_kernel * width_kernel <= MAX_CONSTANT_SIZE){
         printf("Using constant!\n");
         CHECK(cudaMemcpyToSymbol(dc_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
-        device_weight = dc_weight;
-        printf("pointer is %p %p\n",device_weight, dc_weight);
     }else{
         CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
         CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
     }
-    CHECK(cudaMalloc((void **)&device_bias, channel_out * sizeof(float)));
+    
 
     // Copy input and mask data to device
     CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
