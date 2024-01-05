@@ -167,8 +167,8 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
         CHECK(cudaStreamSynchronize(streams[i]));
         cudaStreamDestroy(streams[i]);
 
-        CHECK(cudaFree(&device_input[i]));
-        CHECK(cudaFree(&device_output[i]));
+        CHECK(cudaFree(device_input[i]));
+        CHECK(cudaFree(device_output[i]));
     }
 
 
