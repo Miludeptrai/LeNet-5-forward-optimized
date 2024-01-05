@@ -3,7 +3,7 @@
 
 #define MAX_CONSTANT_SIZE 8192 
 
-__constant__ float dc_kernel[MAX_CONSTANT_SIZE];
+__constant__ float dc_weight[MAX_CONSTANT_SIZE];
 
 __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, int channel_out,
@@ -64,7 +64,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
             for ( j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
                     accumulator += temp_input[(i+r)*width_tiled + j+c] * weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
-                                                                        in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j] //temp_kernel[i*width_kernel + j];
+                                                                        in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
                 }
             }
         }
