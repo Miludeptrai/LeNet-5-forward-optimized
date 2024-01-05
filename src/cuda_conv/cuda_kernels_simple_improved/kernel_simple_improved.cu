@@ -123,7 +123,7 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
 
 
 
-    int batch_size = 1;
+    int batch_size = 32;
     // setting cuda streams
     int nStreams = 4;
     float **device_input = new float*[nStreams], **device_output = new float*[nStreams];
