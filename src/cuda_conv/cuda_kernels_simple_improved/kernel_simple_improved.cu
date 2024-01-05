@@ -130,5 +130,5 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     // Free device memory
     CHECK(cudaFree(device_input));
     CHECK(cudaFree(device_output));
-    CHECK(cudaFree(device_weight));
+    //CHECK(cudaFree(device_weight));
 }
