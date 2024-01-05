@@ -134,7 +134,7 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     int height_grid = (height_out - 1) / TILE_WIDTH + 1;
     int width_grid = (width_out - 1) / TILE_WIDTH + 1;
     int Z = height_grid * width_grid;
-    dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, batch_size);
+    dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
     dim3 num_blocks_in_grid(Z, channel_out,batch_size);
     int share_mem_size = ((TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel) + height_kernel * width_kernel) * sizeof(float);
 
