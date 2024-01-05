@@ -1,6 +1,10 @@
 #include "kernel_simple_improved.h"
 #define TILE_WIDTH 32
 
+#define MAX_CONSTANT_SIZE 8192 
+
+__constant__ float dc_kernel[MAX_CONSTANT_SIZE];
+
 __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, int channel_out,
                             float *input_data,  float *weight_data,float *bias_data, float *output_data)
@@ -36,12 +40,14 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     int i,j;
     for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++){
         //read kernal for its channel 
-        for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
-            for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
-                temp_kernel[i*width_kernel + j] = weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
-                                                            in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
-            }
-        }
+
+        // for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
+        //     for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
+        //         temp_kernel[i*width_kernel + j] = weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+        //                                                     in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
+        //     }
+        // }
+
         //load data to shared mem 
         for ( i = r ;i<height_kernel+ TILE_WIDTH -1; i+= TILE_WIDTH){
             for ( j = c ; j < width_tiled ; j+= TILE_WIDTH){
@@ -57,7 +63,8 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         for ( i = 0 ;i<height_kernel; i++){
             for ( j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
-                    accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[i*width_kernel + j];
+                    accumulator += temp_input[(i+r)*width_tiled + j+c] * weight_data[out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                                                                        in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j] //temp_kernel[i*width_kernel + j];
                 }
             }
         }
@@ -85,12 +92,20 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
     float *device_input, *device_output, *device_weight,*device_bias;
     CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+    if (channel_out * channel_in * height_kernel * width_kernel < MAX_CONSTANT_SIZE){
+        printf("Using constant!\n");
+        CHECK(cudaMemcpyToSymbol(dc_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+        device_weight = dc_weight;
+
+    }else{
+        CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+        CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
+    }
     CHECK(cudaMalloc((void **)&device_bias, channel_out * sizeof(float)));
 
     // Copy input and mask data to device
     CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
+    
     CHECK(cudaMemcpy(device_bias, bias_data, channel_out * sizeof(float), cudaMemcpyHostToDevice));
 
     // Set the kernel dimensions and call the kernel
