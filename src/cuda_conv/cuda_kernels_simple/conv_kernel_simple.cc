@@ -22,16 +22,18 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     std::cout << "Convolution - CPU:" << std::endl;
     timer.Start();
     data_cols.resize(n_sample);
-    // for (int i = 0; i < n_sample; i ++) {
-    //     // im2col
-    //     Matrix data_col;
-    //     im2col(bottom.col(i), data_col);
-    //     //data_cols[i] = data_col;
-    //     // conv by product
-    //     Matrix result = data_col * weight;  // result: (hw_out, channel_out)
-    //     result.rowwise() += bias.transpose();
-    //     top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
-    // }
+    if (n_sample <128){
+        for (int i = 0; i < n_sample; i ++) {
+            // im2col
+            Matrix data_col;
+            im2col(bottom.col(i), data_col);
+            //data_cols[i] = data_col;
+            // conv by product
+            Matrix result = data_col * weight;  // result: (hw_out, channel_out)
+            result.rowwise() += bias.transpose();
+            top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
+        }
+    }
     
     timer.Stop();
     float duration_layer = timer.Elapsed();
