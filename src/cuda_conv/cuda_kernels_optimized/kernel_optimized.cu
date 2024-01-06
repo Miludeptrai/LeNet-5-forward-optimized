@@ -57,13 +57,13 @@ __global__ void multi_weight_add_bias_kernel_2(float* unroll_matrix, float *weig
     int start_output = batch_idx * height_unroll * channel_out;
 
 	float sum = 0 ;
-	for(int b = 0 ; b < (n-1)/TILE_WIDTH + 1 ; b++){
+	for(int b = 0 ; b < (width_unroll-1)/TILE_WIDTH + 1 ; b++){
         if (r<height_unroll && b*TILE_WIDTH+threadIdx.x<width_unroll)
             s_A[threadIdx.y][threadIdx.x] = unroll_matrix[start_unroll + r + (b*TILE_WIDTH+threadIdx.x)*height_unroll];
         else
             s_A[threadIdx.y][threadIdx.x] = 0;
         if (b*TILE_WIDTH+threadIdx.y<width_unroll && c < channel_out)
-            s_B[threadIdx.y][threadIdx.x] = B[(b*TILE_WIDTH + threadIdx.y) + c*width_unroll];
+            s_B[threadIdx.y][threadIdx.x] = weight_data[(b*TILE_WIDTH + threadIdx.y) + c*width_unroll];
         else
             s_B[threadIdx.y][threadIdx.x] = 0;
         __syncthreads();
@@ -73,7 +73,7 @@ __global__ void multi_weight_add_bias_kernel_2(float* unroll_matrix, float *weig
         __syncthreads();
 	}
     if (r<height_unroll && c<channel_out)
-        C[start_output + c * height_unroll + r] = sum + bias[c]; 
+        output_data[start_output + c * height_unroll + r] = sum + bias_data[c]; 
 }
 
 
