@@ -109,5 +109,5 @@ int main3() {
 int main() {
   // data
   printf("main3 LeNet5_CUDA_OPTIMIZED");
-  main1();
+  main3();
 }
