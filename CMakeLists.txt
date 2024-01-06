@@ -5,7 +5,7 @@ enable_language(CUDA)
 
 set(CUDA_ARCHITECTURES "75")
 
-# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fmad=false")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fmad=false")
 
 set(CUDA_SOURCES
     /src/LeNet5/LeNet5.cc

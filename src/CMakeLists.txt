@@ -11,6 +11,7 @@ aux_source_directory(./cuda_conv/cuda_testing DIR_LIB_SRCS)
 aux_source_directory(./cuda_conv/cuda_kernels_simple DIR_LIB_SRCS)
 aux_source_directory(./cuda_conv/cuda_kernels_simple_improved DIR_LIB_SRCS)
 aux_source_directory(./cuda_conv/cuda_kernels_none_optimize DIR_LIB_SRCS)
+aux_source_directory(./cuda_conv/cuda_kernels_optimized DIR_LIB_SRCS)
 
 # 生成链接库
 add_library (MiniDNNLib ${DIR_LIB_SRCS})
