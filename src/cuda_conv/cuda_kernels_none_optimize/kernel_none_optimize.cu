@@ -67,6 +67,8 @@ __global__ void unroll_kernel_2(int channel_in, int height_in, int width_in, int
         
         int a0 =batch_idx*channel_in*height_in*width_in + c*(width_in*height_in);
         for (int i =0 ;i <height_unroll ; i++){
+            //our goal is go to each row and put correct value for unroll_matrix, while `t` show us which col this thread is used
+            //worst performance
             int i_row = i/width_out + ith/width_kernel;
             int i_col = i%width_out + ith%width_kernel;
             unroll_matrix[batch_idx*width_unroll*height_unroll + t*height_unroll+ i] = input_data[a0 + i_row*width_in + i_col];
@@ -76,7 +78,7 @@ __global__ void unroll_kernel_2(int channel_in, int height_in, int width_in, int
 
 __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
-                            float* __restrict__ input_data, float* unroll_matrix)
+                            float* __restrict__ input_data, float* __restrict__ unroll_matrix)
 {
     int batch_idx = blockIdx.z;
 
@@ -100,9 +102,12 @@ __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int
 
         float in_value = input_data[batch_idx*channel_in*height_in*width_in + t];
 
-        int row_u,col_u;
-        for (int p=0;p<height_kernel;p++){
-            for (int q=0;q<width_kernel;q++){
+        int row_u,col_u,p,q;
+        for (p=0;p<height_kernel;p++){
+            for (q=0;q<width_kernel;q++){
+                //Our goal is putting value of `in_value` in correct positions
+                //best performance
+                //also best algorithms for parallel
                 row_u =  row_in -p;
                 col_u = col_in - q;
                 if(row_u < height_out && col_u < width_out && row_u >= 0 && col_u >= 0)
