@@ -102,7 +102,7 @@ __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int
 
         for (int p=0;p<height_kernel;p++){
             for (int q=0;q<width_kernel;q++){
-                if((row_in -p) < height_out && col_in - q < width_out)
+                if((row_in -p) < height_out && col_in - q < width_out && (row_in -p) >= 0 && col_in - q >= 0)
                     unroll_matrix[batch_idx*width_unroll*height_unroll + (c * width_kernel * height_kernel + p*width_kernel + q)*height_unroll+ (row_in -p) *width_out + col_in - q] = in_value;
             }
         }
