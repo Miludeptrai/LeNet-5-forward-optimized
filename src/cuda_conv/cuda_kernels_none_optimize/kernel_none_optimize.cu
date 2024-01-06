@@ -166,6 +166,8 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     
     // Set the kernel dimensions and call the kernel
 
+    // If u use another unroll_kernel, remember to change `gridSize_unroll`
+
     // dim3 blockSize_unroll(1024);
     // dim3 gridSize_unroll((height_out * width_out  * channel_in-1)/1024 + 1 ,1,batch_size);
     dim3 blockSize_unroll(1024);
