@@ -102,12 +102,12 @@ int main3() {
   std::cout << "mnist train number: " << n_train << std::endl;
   std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
   // dnn
-  Network dnn = LeNet5_CUDA_SIMPLE();
+  Network dnn = LeNet5_CUDA_NONE_OPTIMIZE();
     dnn.forward(dataset.test_data);
   return 0;
 }
 int main() {
   // data
-  printf("main1");
+  printf("main3 LeNet5_CUDA_NONE_OPTIMIZE");
   main3();
 }
