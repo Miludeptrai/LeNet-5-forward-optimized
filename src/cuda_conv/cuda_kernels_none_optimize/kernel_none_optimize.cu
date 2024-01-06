@@ -76,7 +76,7 @@ __global__ void unroll_kernel_2(int channel_in, int height_in, int width_in, int
 
 __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, 
-                            float* __restrict__ input_data, float* __restrict__ unroll_matrix)
+                            float* __restrict__ input_data, float* unroll_matrix)
 {
     int batch_idx = blockIdx.z;
 
