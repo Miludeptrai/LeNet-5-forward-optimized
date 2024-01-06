@@ -50,34 +50,67 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     const int width_out = width_in - width_kernel + 1;
 
     // Allocate device memory
-    float *device_input, *device_output, *device_weight,*device_bias;
-    CHECK(cudaMalloc((void **)&device_input, n_samples * channel_in * height_in * width_in * sizeof(float)));
-    CHECK(cudaMalloc((void **)&device_output, n_samples * channel_out * height_out * width_out * sizeof(float)));
+    float *device_weight,*device_bias;
     CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
     CHECK(cudaMalloc((void **)&device_bias, channel_out * sizeof(float)));
 
     // Copy input and mask data to device
-    CHECK(cudaMemcpy(device_input, input_data, n_samples * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
     CHECK(cudaMemcpy(device_bias, bias_data, channel_out * sizeof(float), cudaMemcpyHostToDevice));
-
+    
+    //what is this? yes we have n_samples images, but in some case, we cannot load them all into GPU mem,
+    //we seperate them to each batch, an here I set it 32 
+    int batch_size = 32;
+    // setting cuda streams
+    int nStreams = 4;
+    float **device_input = new float*[nStreams], **device_output = new float*[nStreams];
+    cudaStream_t streams[nStreams];
+    
     // Set the kernel dimensions and call the kernel
-    int height_grid = (height_out - 1) / TILE_WIDTH + 1 ;
+    int height_grid = (height_out - 1) / TILE_WIDTH + 1;
     int width_grid = (width_out - 1) / TILE_WIDTH + 1;
     int Z = height_grid * width_grid;
     dim3 num_threads_per_block(TILE_WIDTH, TILE_WIDTH, 1);
-    dim3 num_blocks_in_grid(Z, channel_out,n_samples);
-    conv_forward_kernel_1<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
-                             width_kernel,  height_out,  width_out,  channel_out,
-                            device_input,  device_weight,device_bias, device_output);
+    dim3 num_blocks_in_grid(Z, channel_out,batch_size);
 
-    CHECK(cudaDeviceSynchronize()); // Ensure that the GPU has completed the computation
+    for (int i = 0; i < nStreams; i++){
+		CHECK(cudaStreamCreate(&streams[i]));    
+        //Each stream use its GPU mem, and no new GPU location
+        CHECK(cudaMalloc((void **)&device_input[i], batch_size * channel_in * height_in * width_in * sizeof(float)));
+        CHECK(cudaMalloc((void **)&device_output[i], batch_size * channel_out * height_out * width_out * sizeof(float)));
+    }
+    // loop through each sample
+    for (int stream = 0; stream < nStreams; stream++){
+        for (int i = stream * batch_size; i < n_samples; i+=nStreams*batch_size) {
+            //There is a problem. Most of time, the final batch dont have enough image, will it cause error?
+            //The answer is no, because there are still some images from batch before the last
+            int start_in = i * channel_in * height_in * width_in;
+            int start_out = i * channel_out * height_out * width_out;
+            
+            //copy the data to correct stream mem 
+            CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
-    // Copy the output back to host
-    CHECK(cudaMemcpy(output_data, device_output, n_samples * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost));
-
+            conv_forward_kernel_1<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
+                                width_kernel,  height_out,  width_out,  channel_out,
+                                device_input[stream],  device_weight,device_bias, device_output[stream]);
+            CHECK(cudaMemcpyAsync(output_data + start_out, device_output[stream], min(batch_size,n_samples-i) * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost, streams[stream]));
+        }
+    }
+    cudaError_t errSync = cudaGetLastError();
+    cudaError_t errAsync = cudaDeviceSynchronize();
+    if (errSync != cudaSuccess) 
+        printf("Sync kernel error: %s\n", cudaGetErrorString(errSync));
+    if (errAsync != cudaSuccess)
+        printf("Async kernel error: %s\n", cudaGetErrorString(errAsync));
     // Free device memory
-    CHECK(cudaFree(device_input));
-    CHECK(cudaFree(device_output));
+    for (int i = 0; i < nStreams; i++){
+        CHECK(cudaStreamSynchronize(streams[i]));
+        cudaStreamDestroy(streams[i]);
+        //delete each stream GPU mem 
+        CHECK(cudaFree(device_input[i]));
+        CHECK(cudaFree(device_output[i]));
+    }
+    
+    CHECK(cudaFree(device_bias));
     CHECK(cudaFree(device_weight));
 }
