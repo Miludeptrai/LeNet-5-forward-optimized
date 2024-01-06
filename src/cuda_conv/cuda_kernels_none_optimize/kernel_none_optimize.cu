@@ -26,7 +26,7 @@ __global__ void unroll_kernel_1(int channel_in, int height_in, int width_in, int
         int col_out = row_unroll % width_out;//
 
         //channel start position 
-        int start_c =batch_idx*channel_in*height_in*width_in c*(width_in*height_in);//
+        int start_c =batch_idx*channel_in*height_in*width_in + c*(width_in*height_in);//
 
         //how many rows of the channel before this?
         int w_base =  c * width_kernel * height_kernel; //
@@ -175,7 +175,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     }
 
     CHECK(cudaFree(device_bias));
-    
+
     CHECK(cudaFree(device_weight));
     CHECK(cudaFree(device_unroll_matrix));
 
