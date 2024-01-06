@@ -50,7 +50,9 @@ __global__ void unroll_kernel_2(int channel_in, int height_in, int width_in, int
                             int width_kernel, int height_out, int width_out, 
                             float* input_data, float* unroll_matrix)
 {
-int t = blockIdx.x * blockDim.x + threadIdx.x; //
+    int t = blockIdx.x * blockDim.x + threadIdx.x; //
+    
+    int batch_idx = blockIdx.z;
     int height_unroll = height_out * width_out; //2
     int hw_kernel = width_kernel * height_kernel;
     int width_unroll = hw_kernel * channel_in;
@@ -63,11 +65,45 @@ int t = blockIdx.x * blockDim.x + threadIdx.x; //
         //ith of each filter?
         int ith = t % hw_kernel;//
         
-        int a0 = c*(width_in*height_in);
+        int a0 =batch_idx*channel_in*height_in*width_in + c*(width_in*height_in);
         for (int i =0 ;i <height_unroll ; i++){
             int i_row = i/width_out + ith/width_kernel;
             int i_col = i%width_out + ith%width_kernel;
-            unroll_matrix[ t*height_unroll+ i] = input_data[a0 + i_row*width_in + i_col];
+            unroll_matrix[batch_idx*width_unroll*height_unroll + t*height_unroll+ i] = input_data[a0 + i_row*width_in + i_col];
+        }
+    }
+}
+
+__global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int height_kernel, 
+                            int width_kernel, int height_out, int width_out, 
+                            float* input_data, float* unroll_matrix)
+{
+    int batch_idx = blockIdx.z;
+
+    int t = blockIdx.x * blockDim.x + threadIdx.x; //
+    int height_unroll = height_out * width_out; //2
+    int hw_kernel = width_kernel * height_kernel;
+    int width_unroll = hw_kernel * channel_in;
+    int hw_in = height_in * width_in;
+    if(t <channel_in* hw_in)
+    {   
+        //output is a vector size : imagearea x (kernalarea * channel_in)
+
+        //which chanel are we using?
+        int c = t / hw_in; //
+        //ith of each filter?
+        int ith = t % hw_in;//
+
+        //start position 
+        int row_in = ith / width_in;//
+        int col_in = ith % width_in;//
+
+        int in_value = input_data[batch_idx*channel_in*height_in*width_in + c*(width_in*height_in) + row_in*width_in + col_in];
+
+        for (int p=0;p<height_kernel;p++){
+            for (int q=0;q<width_kernel;q++){
+                unroll_matrix[batch_idx*width_unroll*height_unroll + (p*width_kernel + q)*height_unroll+ (row_in -p) *width_out + col_in - q] = in_value;
+            }
         }
     }
 }
@@ -120,8 +156,11 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     cudaStream_t streams[nStreams];
     
     // Set the kernel dimensions and call the kernel
+
+    // dim3 blockSize_unroll(1024);
+    // dim3 gridSize_unroll((height_out * width_out  * channel_in-1)/1024 + 1 ,1,batch_size);
     dim3 blockSize_unroll(1024);
-    dim3 gridSize_unroll((height_out * width_out  * channel_in-1)/1024 + 1 ,1,batch_size);
+    dim3 gridSize_unroll((height_in * width_in  * channel_in-1)/1024 + 1 ,1,batch_size);
 
     dim3 blockSize_multi(32, 32);
     dim3 gridSize_multi(( channel_out-1)/blockSize_multi.y + 1,(height_out * width_out-1)/blockSize_multi.x + 1,batch_size);
@@ -147,7 +186,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
             //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
-            unroll_kernel_1<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
+            unroll_kernel_3<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input[stream],  device_unroll_matrix);
