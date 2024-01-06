@@ -90,7 +90,7 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
             //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
-            conv_forward_kernel_1<<<num_blocks_in_grid, num_threads_per_block>>>( channel_in, height_in,  width_in, height_kernel, 
+            conv_forward_kernel_1<<<num_blocks_in_grid, num_threads_per_block, 0, streams[stream]>>>( channel_in, height_in,  width_in, height_kernel, 
                                 width_kernel,  height_out,  width_out,  channel_out,
                                 device_input[stream],  device_weight,device_bias, device_output[stream]);
             CHECK(cudaMemcpyAsync(output_data + start_out, device_output[stream], min(batch_size,n_samples-i) * channel_out * height_out * width_out * sizeof(float), cudaMemcpyDeviceToHost, streams[stream]));
