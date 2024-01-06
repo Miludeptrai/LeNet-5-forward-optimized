@@ -107,7 +107,7 @@ __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int
             for (q=0;q<width_kernel;q++){
                 //Our goal is putting value of `in_value` in correct positions
                 //best performance
-                //also best algorithms for parallel
+                //also great algorithms for parallel 
                 row_u =  row_in -p;
                 col_u = col_in - q;
                 if(row_u < height_out && col_u < width_out && row_u >= 0 && col_u >= 0)
