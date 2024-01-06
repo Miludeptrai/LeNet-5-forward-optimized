@@ -38,7 +38,7 @@ int main1() {
   std::cout << "mnist train number: " << n_train << std::endl;
   std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
   // dnn
-  Network dnn = LeNet5_CUDA_SIMPLE();
+  Network dnn = LeNet5_CUDA_OPTIMIZED();
 
   // train & test
   SGD opt(0.001, 5e-4, 0.9, true);
@@ -109,5 +109,5 @@ int main3() {
 int main() {
   // data
   printf("main3 LeNet5_CUDA_SIMPLE");
-  main1();
+  main3();
 }
