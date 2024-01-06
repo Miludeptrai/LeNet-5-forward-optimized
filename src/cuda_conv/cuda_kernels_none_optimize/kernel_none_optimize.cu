@@ -91,7 +91,7 @@ __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int
 
         //which chanel are we using?
         int c = t / hw_in; //
-        //ith of each filter?
+        //ith of each channel?
         int ith = t % hw_in;//
 
         //start position 
@@ -187,7 +187,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
             //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
-            unroll_kernel_3<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
+            unroll_kernel_1<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input[stream],  device_unroll_matrix);
