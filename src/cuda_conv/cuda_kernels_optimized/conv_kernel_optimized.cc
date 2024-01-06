@@ -1,18 +1,20 @@
-#include "conv_kernel_simple.h"
+#include "conv_kernel_optimized.h"
 #include <math.h>
 #include <iostream>
 
 
 
 //####################################################################################################
-void ConvKernel_simple::forward(const Matrix &bottom)
+void ConvKernel_optimized::forward(const Matrix &bottom)
 {
+    
     int n_sample = bottom.cols();
     top.resize(height_out * width_out * channel_out, n_sample);
     float *input_data = (float *)bottom.data();
     float *output_data = (float *)malloc(height_out * width_out * channel_out *n_sample * sizeof(float));//(float *)top.data();
     float *weight_data = (float *)weight.data();
     float *bias_data = (float *)bias.data();
+
 
 
     printf("%ld %ld \n",bottom.cols(),bottom.rows());
@@ -39,15 +41,15 @@ void ConvKernel_simple::forward(const Matrix &bottom)
     float duration_layer = timer.Elapsed();
     std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
     
-    Kernel_simple kernel;
+    Kernel_optimized kernel_optimized;
     std::cout << "Convolution - GPU:" << std::endl;
     timer.Start();
 
     // Launch marker kernel to aid with student function timing
     // gpuInterface.insert_pre_barrier_kernel();
 
-    // Start layer timer
-    kernel.cuda_conv_forward(n_sample,channel_in,  height_in, width_in,
+    // Start layer timer 
+    kernel_optimized.cuda_conv_forward(n_sample,channel_in,  height_in, width_in,
                                     height_kernel, width_kernel, channel_out,
                                     input_data, weight_data,bias_data, output_data);
 

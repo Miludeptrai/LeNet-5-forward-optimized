@@ -22,7 +22,7 @@ void ConvKernel_simple_improved::forward(const Matrix &bottom)
     std::cout << "Convolution - CPU:" << std::endl;
     timer.Start();
     data_cols.resize(n_sample);
-    if (n_sample <128){
+    if (n_sample <=128){
         for (int i = 0; i < n_sample; i ++) {
             // im2col
             Matrix data_col;
