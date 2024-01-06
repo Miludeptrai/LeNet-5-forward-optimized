@@ -95,6 +95,5 @@ int main2() {
 int main() {
   // data
   printf("main1");
-  main1();
   main2();
 }
