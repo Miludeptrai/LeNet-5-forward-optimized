@@ -147,12 +147,12 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
             //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
-            unroll_kernel_1<<<gridSize_unroll, blockSize_unroll>>>
+            unroll_kernel_1<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input[stream],  device_unroll_matrix);
                             
-            multi_weight_add_bias_kernel_1<<<gridSize_multi,blockSize_multi>>>
+            multi_weight_add_bias_kernel_1<<<gridSize_multi,blockSize_multi, 0, streams[stream]>>>
                                 (device_unroll_matrix,device_weight,device_output[stream],device_bias
                                 ,height_out * width_out, height_kernel * width_kernel * channel_in, channel_out);
                     
