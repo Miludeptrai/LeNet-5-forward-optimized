@@ -92,8 +92,22 @@ int main2() {
     dnn.forward(dataset.test_data);
   return 0;
 }
+int main3() {
+  // data
+  MNIST dataset("../data/fashion/");
+  dataset.read();
+  int n_train = dataset.train_data.cols();
+  int dim_in = dataset.train_data.rows();
+  std::cout << "mnist dim_in: " << dim_in << std::endl;
+  std::cout << "mnist train number: " << n_train << std::endl;
+  std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
+  // dnn
+  Network dnn = LeNet5_CUDA_SIMPLE();
+    dnn.forward(dataset.test_data);
+  return 0;
+}
 int main() {
   // data
   printf("main1");
-  main1();
+  main3();
 }
