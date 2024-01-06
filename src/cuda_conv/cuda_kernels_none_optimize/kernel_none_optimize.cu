@@ -98,7 +98,7 @@ __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int
         int row_in = ith / width_in;//
         int col_in = ith % width_in;//
 
-        int in_value = input_data[batch_idx*channel_in*height_in*width_in + t];
+        float in_value = input_data[batch_idx*channel_in*height_in*width_in + t];
 
         int row_u,col_u;
         for (int p=0;p<height_kernel;p++){
@@ -180,8 +180,8 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     CHECK(cudaMalloc((void **)&device_unroll_matrix, batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float)));
 
     
-    float *unroll1 = (float *)malloc(batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float));//(float *)top.data();
-    float *unroll2 = (float *)malloc(batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float));//(float *)top.data();
+    // float *unroll1 = (float *)malloc(batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float));//(float *)top.data();
+    // float *unroll2 = (float *)malloc(batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float));//(float *)top.data();
 
     // loop through each sample
     for (int stream = 0; stream < nStreams; stream++){
@@ -194,19 +194,19 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
             //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
 
-            unroll_kernel_1<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
-                            (channel_in,  height_in,  width_in,  height_kernel, 
-                             width_kernel,  height_out,  width_out, 
-                            device_input[stream],  device_unroll_matrix);
-            CHECK(cudaMemcpy(unroll1, device_unroll_matrix,batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyDeviceToHost));
+            // unroll_kernel_1<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
+            //                 (channel_in,  height_in,  width_in,  height_kernel, 
+            //                  width_kernel,  height_out,  width_out, 
+            //                 device_input[stream],  device_unroll_matrix);
+            // CHECK(cudaMemcpy(unroll1, device_unroll_matrix,batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyDeviceToHost));
             unroll_kernel_3<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input[stream],  device_unroll_matrix);
-            CHECK(cudaMemcpy(unroll2, device_unroll_matrix,batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyDeviceToHost));
-            printf("u1 - u2 : \n");
-            printError(unroll1,unroll2,batch_size * height_out * width_out * channel_in * height_kernel * width_kernel,1);
-            printf("end u1 - u2!\n");
+            // CHECK(cudaMemcpy(unroll2, device_unroll_matrix,batch_size * height_out * width_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyDeviceToHost));
+            // printf("u1 - u2 : \n");
+            // printError(unroll1,unroll2,batch_size * height_out * width_out * channel_in * height_kernel * width_kernel,1);
+            // printf("end u1 - u2!\n");
                             
             multi_weight_add_bias_kernel_1<<<gridSize_multi,blockSize_multi, 0, streams[stream]>>>
                                 (device_unroll_matrix,device_weight,device_output[stream],device_bias
