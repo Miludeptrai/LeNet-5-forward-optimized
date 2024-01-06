@@ -98,7 +98,7 @@ __global__ void unroll_kernel_3(int channel_in, int height_in, int width_in, int
         int row_in = ith / width_in;//
         int col_in = ith % width_in;//
 
-        int in_value = input_data[batch_idx*channel_in*height_in*width_in + c*(width_in*height_in) + row_in*width_in + col_in];
+        int in_value = input_data[batch_idx*channel_in*height_in*width_in + t];
 
         int row_u,col_u;
         for (int p=0;p<height_kernel;p++){
@@ -133,7 +133,7 @@ __global__ void multi_weight_add_bias_kernel_1(float* unroll_matrix, float *weig
 
 
 
-__host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int channel_in,  int height_in, int width_in,
+__host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int channel_in,  int height_in, int width_in,    
                                     int height_kernel, int width_kernel,  int channel_out,
                                      float *input_data, float *weight_data,float *bias_data, float *output_data){
 
