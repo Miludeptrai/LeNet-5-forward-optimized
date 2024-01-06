@@ -123,7 +123,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
     //printf("block : 1024, grid : %d\n",(height_out * width_out  * max(channel_in,channel_out)-1)/1024 + 1 );    
 
     for (int i = 0; i < n_samples; i ++) {
-        unroll_kernel_2<<<gridSize_unroll, blockSize_unroll>>>
+        unroll_kernel_1<<<gridSize_unroll, blockSize_unroll>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input + i*channel_in * height_in * width_in,  device_unroll_matrix);
