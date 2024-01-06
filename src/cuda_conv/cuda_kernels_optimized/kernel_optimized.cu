@@ -44,7 +44,7 @@ __global__ void unroll_kernel_4(int channel_in, int height_in, int width_in, int
 }
 
 
-__global__ void multi_weight_add_bias_kernel_2(float* __restrict__ unroll_matrix, float __restrict__ *weight_data, float* __restrict__ output_data,float* bias_data,
+__global__ void multi_weight_add_bias_kernel_2(float* __restrict__ unroll_matrix, float* __restrict__ weight_data, float* __restrict__ output_data,float* bias_data,
                                                 int height_unroll, int width_unroll,int channel_out)//m,n,k
 {
     __shared__ float s_A[TILE_WIDTH][TILE_WIDTH];
