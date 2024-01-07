@@ -105,8 +105,9 @@ int main(int argc, char** argv) {
   try {
     printf("main1 LeNet5_CUDA_OPTIMIZED\n");
     main1(LeNet5_CUDA_OPTIMIZED());
+  }catch (...) {
     printf("Hello");
-  }catch (...) {}
+  }
   try {
     printf("main2 LeNet5_CUDA_OPTIMIZED\n");
     main2(LeNet5_CUDA_OPTIMIZED());
