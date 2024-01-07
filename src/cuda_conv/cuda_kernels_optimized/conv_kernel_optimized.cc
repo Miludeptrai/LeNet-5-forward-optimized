@@ -20,9 +20,9 @@ void ConvKernel_optimized::forward(const Matrix &bottom)
     printf("Layer input size : %ld %ld \n",bottom.cols(),bottom.rows());
     float duration_layer;
     GpuTimer timer;
-    std::cout << "Convolution - CPU:" << std::endl;
     data_cols.resize(n_sample);
     if (n_sample <=128){
+    std::cout << "Convolution - CPU:" << std::endl;
         
         timer.Start();
         for (int i = 0; i < n_sample; i ++) {
@@ -63,9 +63,10 @@ void ConvKernel_optimized::forward(const Matrix &bottom)
 
     std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
     
-    printf("Error between CPU and GPU : \n");
         
     if (n_sample <=128){
+    printf("Error between CPU and GPU : \n");
         printError((float *)top.data(),output_data,height_out * width_out * channel_out *n_sample,1);
     }
+    printf("\n");
 }
