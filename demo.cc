@@ -102,12 +102,20 @@ int main3(Network Net) {
 }
 int main(int argc, char** argv) {
   // data
-  printf("main1 LeNet5_CUDA_OPTIMIZED\n");
-  main1(LeNet5_CUDA_OPTIMIZED());
-  printf("main2 LeNet5_CUDA_OPTIMIZED\n");
-  main2(LeNet5_CUDA_OPTIMIZED());
-  printf("main3 LeNet5_CUDA_OPTIMIZED_DOU\n");
-  main3(LeNet5_CUDA_OPTIMIZED_DOU());
-  printf("main4 LeNet5_CUDA_OPTIMIZED_QUAD\n");
-  main4(LeNet5_CUDA_OPTIMIZED_QUAD());
+  try {
+    printf("main1 LeNet5_CUDA_OPTIMIZED\n");
+    main1(LeNet5_CUDA_OPTIMIZED());
+  }catch(){}
+  try {
+    printf("main2 LeNet5_CUDA_OPTIMIZED\n");
+    main2(LeNet5_CUDA_OPTIMIZED());
+  }catch(){}
+  try {
+    printf("main3 LeNet5_CUDA_OPTIMIZED_DOU\n");
+    main3(LeNet5_CUDA_OPTIMIZED_DOU());
+  }catch(){}
+  try {
+    printf("main4 LeNet5_CUDA_OPTIMIZED_QUAD\n");
+    main4(LeNet5_CUDA_OPTIMIZED_QUAD());
+  }catch(){}
 }
