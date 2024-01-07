@@ -32,7 +32,7 @@ foreach(SOURCE_PATH ${SOURCE_FILES})
 
     get_filename_component(EXECUTABLE_NAME ${SOURCE_PATH} NAME_WE)
     add_executable(${EXECUTABLE_NAME} ${SOURCE_PATH})
-    target_link_libraries(EXECUTABLE_NAME MiniDNNLib)
+    target_link_libraries(${EXECUTABLE_NAME} MiniDNNLib)
 
 endforeach(SOURCE_PATH ${SOURCE_FILES})
 
