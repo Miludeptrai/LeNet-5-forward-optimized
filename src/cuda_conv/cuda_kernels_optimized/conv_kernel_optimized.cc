@@ -17,14 +17,14 @@ void ConvKernel_optimized::forward(const Matrix &bottom)
 
 
 
-    printf("%ld %ld \n",bottom.cols(),bottom.rows());
-    printf("%d \n",height_out * width_out * channel_out);
+    printf("Layer input size : %ld %ld \n",bottom.cols(),bottom.rows());
     
     GpuTimer timer;
     std::cout << "Convolution - CPU:" << std::endl;
-    timer.Start();
     data_cols.resize(n_sample);
     if (n_sample <=128){
+        
+        timer.Start();
         for (int i = 0; i < n_sample; i ++) {
             // im2col
             Matrix data_col;
@@ -35,15 +35,16 @@ void ConvKernel_optimized::forward(const Matrix &bottom)
             result.rowwise() += bias.transpose();
             top.col(i) = Eigen::Map<Vector>(result.data(), result.size());
         }
+        
+        timer.Stop();
+        float duration_layer = timer.Elapsed();
+        std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+        
+        Kernel_optimized kernel_optimized;
+        std::cout << "Convolution - GPU:" << std::endl;
+        timer.Start();
     }
     
-    timer.Stop();
-    float duration_layer = timer.Elapsed();
-    std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
-    
-    Kernel_optimized kernel_optimized;
-    std::cout << "Convolution - GPU:" << std::endl;
-    timer.Start();
 
     // Launch marker kernel to aid with student function timing
     // gpuInterface.insert_pre_barrier_kernel();

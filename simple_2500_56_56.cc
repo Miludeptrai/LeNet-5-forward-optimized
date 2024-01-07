@@ -33,9 +33,7 @@ int main() {
   dataset.read();
   int n_train = dataset.train_data.cols();
   int dim_in = dataset.train_data.rows();
-  std::cout << "mnist dim_in: " << dim_in << std::endl;
-  std::cout << "mnist train number: " << n_train << std::endl;
-  std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
+  std::cout << "mnist dim_in: " << 56*56 << std::endl;
   // dnn
   Network dnn = LeNet5_CUDA_SIMPLE_DOU();
   dataset.test_data.resize(56*56, 10000/4);
