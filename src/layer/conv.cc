@@ -53,8 +53,6 @@ void Conv::im2col(const Vector& image, Matrix& data_col) {
 //#######################################################################################
 void Conv::forward(const Matrix& bottom) {
   
-  printf("%ld %ld \n",bottom.cols(),bottom.rows());
-  printf("%d \n",height_out * width_out * channel_out);
   int n_sample = bottom.cols();
   top.resize(height_out * width_out * channel_out, n_sample);
   data_cols.resize(n_sample);
@@ -62,7 +60,7 @@ void Conv::forward(const Matrix& bottom) {
     // im2col
     Matrix data_col;
     im2col(bottom.col(i), data_col);
-    //data_cols[i] = data_col;
+    data_cols[i] = data_col;
     // conv by product
     Matrix result = data_col * weight;  // result: (hw_out, channel_out)
     result.rowwise() += bias.transpose();
