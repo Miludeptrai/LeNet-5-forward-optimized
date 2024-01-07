@@ -105,17 +105,17 @@ int main(int argc, char** argv) {
   try {
     printf("main1 LeNet5_CUDA_OPTIMIZED\n");
     main1(LeNet5_CUDA_OPTIMIZED());
-  }catch(){}
+  }catch (...) {}
   try {
     printf("main2 LeNet5_CUDA_OPTIMIZED\n");
     main2(LeNet5_CUDA_OPTIMIZED());
-  }catch(){}
+  }catch (...) {}
   try {
     printf("main3 LeNet5_CUDA_OPTIMIZED_DOU\n");
     main3(LeNet5_CUDA_OPTIMIZED_DOU());
-  }catch(){}
+  }catch (...) {}
   try {
     printf("main4 LeNet5_CUDA_OPTIMIZED_QUAD\n");
     main4(LeNet5_CUDA_OPTIMIZED_QUAD());
-  }catch(){}
+  }catch (...) {}
 }
