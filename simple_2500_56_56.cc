@@ -37,7 +37,7 @@ int main() {
   std::cout << "mnist train number: " << n_train << std::endl;
   std::cout << "mnist test number: " << dataset.test_labels.cols() << std::endl;
   // dnn
-  Network dnn = LeNet5_CUDA_SIMPLE_DOU;
+  Network dnn = LeNet5_CUDA_SIMPLE_DOU();
   dataset.test_data.resize(56*56, 10000/4);
   dnn.forward(dataset.test_data);
   return 0;
