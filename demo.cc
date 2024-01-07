@@ -102,5 +102,5 @@ int main4(Network Net) {
 }
 int main(int argc, char** argv) {
   // data
-  main1();
+  main1(LeNet5_CUDA_SIMPLE());
 }
