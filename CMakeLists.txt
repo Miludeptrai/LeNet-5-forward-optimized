@@ -3,6 +3,8 @@ project (myproject LANGUAGES CUDA C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 enable_language(CUDA)
 
+set_property(GLOBAL PROPERTY RULE_MESSAGES OFF)
+
 set(CUDA_ARCHITECTURES "75")
 
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fmad=false")
