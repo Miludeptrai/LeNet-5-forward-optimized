@@ -45,9 +45,9 @@ int main1(Network Net) {
   // SGD opt(0.001);
   const int n_epoch = 5;
   const int batch_size = 128;
-  int epoch = 0
+  int epoch = 0;
   shuffle_data(dataset.train_data, dataset.train_labels);
-  int start_idx = 0
+  int start_idx = 0;
 
   int ith_batch = start_idx / batch_size;
   Matrix x_batch = dataset.train_data.block(0, start_idx, dim_in,
