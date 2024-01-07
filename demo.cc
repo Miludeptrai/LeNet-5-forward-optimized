@@ -8,29 +8,29 @@
 #include <algorithm>
 #include <iostream>
 
-#include "../src/layer.h"
-#include "../src/layer/conv.h"
-#include "../src/layer/fully_connected.h"
-#include "../src/layer/ave_pooling.h"
-#include "../src/layer/max_pooling.h"
-#include "../src/layer/relu.h"
-#include "../src/layer/sigmoid.h"
-#include "../src/layer/softmax.h"
-#include "../src/loss.h"
-#include "../src/loss/mse_loss.h"
-#include "../src/loss/cross_entropy_loss.h"
-#include "../src/mnist.h"
-#include "../src/network.h"
-#include "../src/optimizer.h"
-#include "../src/optimizer/sgd.h"
+#include "src/layer.h"
+#include "src/layer/conv.h"
+#include "src/layer/fully_connected.h"
+#include "src/layer/ave_pooling.h"
+#include "src/layer/max_pooling.h"
+#include "src/layer/relu.h"
+#include "src/layer/sigmoid.h"
+#include "src/layer/softmax.h"
+#include "src/loss.h"
+#include "src/loss/mse_loss.h"
+#include "src/loss/cross_entropy_loss.h"
+#include "src/mnist.h"
+#include "src/network.h"
+#include "src/optimizer.h"
+#include "src/optimizer/sgd.h"
 
 
-#include "../src/LeNet5/LeNet5.h"
+#include "src/LeNet5/LeNet5.h"
 
 
 int main1(Network Net) {
   // data
-  MNIST dataset("../../data/fashion/");
+  MNIST dataset("../data/fashion/");
   dataset.read();
   int n_train = dataset.train_data.cols();
   int dim_in = dataset.train_data.rows();
@@ -57,7 +57,7 @@ int main1(Network Net) {
 }
 int main2(Network Net) {
   // data
-  MNIST dataset("../../data/fashion/");
+  MNIST dataset("../data/fashion/");
   dataset.read();
   int n_train = dataset.train_data.cols();
   int dim_in = dataset.train_data.rows();
@@ -72,7 +72,7 @@ int main2(Network Net) {
 
 int main3(Network Net) {
   // data
-  MNIST dataset("../../data/fashion/");
+  MNIST dataset("../data/fashion/");
   dataset.read();
   int n_train = dataset.train_data.cols();
   int dim_in = dataset.train_data.rows();
@@ -87,7 +87,7 @@ int main3(Network Net) {
 }
 int main4(Network Net) {
   // data
-  MNIST dataset("../../data/fashion/");
+  MNIST dataset("../data/fashion/");
   dataset.read();
   int n_train = dataset.train_data.cols();
   int dim_in = dataset.train_data.rows();
