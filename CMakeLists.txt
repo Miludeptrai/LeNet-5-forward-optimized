@@ -22,7 +22,7 @@ aux_source_directory(. DIR_SRCS)
 add_subdirectory(src)
 # 指定生成目标 
 
-add_executable(x_test/demo ${DIR_SRCS})
+add_executable(/x_test/demo ${DIR_SRCS})
 # 添加链接库
-target_link_libraries(x_test/demo MiniDNNLib)
+target_link_libraries(/x_test/demo MiniDNNLib)
 
