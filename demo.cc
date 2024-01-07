@@ -70,7 +70,7 @@ int main2(Network Net) {
   return 0;
 }
 
-int main4(Network Net) {
+int main3(Network Net) {
   // data
   MNIST dataset("../data/fashion/");
   dataset.read();
@@ -85,7 +85,7 @@ int main4(Network Net) {
   dnn.forward(dataset.test_data);
   return 0;
 }
-int main3(Network Net) {
+int main4(Network Net) {
   // data
   MNIST dataset("../data/fashion/");
   dataset.read();
@@ -105,6 +105,7 @@ int main(int argc, char** argv) {
   try {
     printf("main1 LeNet5_CUDA_OPTIMIZED\n");
     main1(LeNet5_CUDA_OPTIMIZED());
+    printf("Hello");
   }catch (...) {}
   try {
     printf("main2 LeNet5_CUDA_OPTIMIZED\n");
