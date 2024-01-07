@@ -16,7 +16,7 @@ void ConvKernel_simple_improved::forward(const Matrix &bottom)
 
 
     printf("Layer input size : %ld %ld \n",bottom.cols(),bottom.rows());
-    
+    float duration_layer;
     GpuTimer timer;
     std::cout << "Convolution - CPU:" << std::endl;
     data_cols.resize(n_sample);
@@ -35,14 +35,14 @@ void ConvKernel_simple_improved::forward(const Matrix &bottom)
         }
         
         timer.Stop();
-        float duration_layer = timer.Elapsed();
+         duration_layer = timer.Elapsed();
         std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
         
-        Kernel_simple_improved kernel;
+
+    }
+            Kernel_simple_improved kernel;
         std::cout << "Convolution - GPU:" << std::endl;
         timer.Start();
-    }
-    
 
     // Launch marker kernel to aid with student function timing
     // gpuInterface.insert_pre_barrier_kernel();
