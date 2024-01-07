@@ -58,10 +58,14 @@ void ConvKernel_none_optimize::forward(const Matrix &bottom)
      duration_layer = timer.Elapsed();
 
     
-    printError((float *)top.data(),output_data,height_out * width_out * channel_out *n_sample,1);
 
     // Launch barrier kernel to aid with timing with nsight-compute
     // gpuInterface.insert_post_barrier_kernel();
 
     std::cout << "\t - Layer Time: " << duration_layer << " ms" << std::endl;
+    printf("Error between CPU and GPU : \n");
+    if (n_sample <=128){
+        printError((float *)top.data(),output_data,height_out * width_out * channel_out *n_sample,1);
+    }
+    
 }
