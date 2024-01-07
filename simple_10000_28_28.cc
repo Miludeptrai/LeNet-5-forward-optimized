@@ -27,7 +27,7 @@
 
 #include "src/LeNet5/LeNet5.h"
 
-int main2() {
+int main() {
   // data
   MNIST dataset("../data/fashion/");
   dataset.read();
