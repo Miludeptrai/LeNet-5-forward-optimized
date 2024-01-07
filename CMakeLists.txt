@@ -26,13 +26,22 @@ add_executable(demo ${DIR_SRCS})
 # 添加链接库
 target_link_libraries(demo MiniDNNLib)
 
+file(GLOB SOURCE_FILES *.cc *.cpp *.c)
 
-add_executable(simple_1_28_28 ${DIR_SRCS})
-target_link_libraries(simple_1_28_28 MiniDNNLib)
-add_executable(simple_625_112_112 ${DIR_SRCS})
-target_link_libraries(simple_625_112_112 MiniDNNLib)
-add_executable(simple_2500_56_56 ${DIR_SRCS})
-target_link_libraries(simple_2500_56_56 MiniDNNLib)
-add_executable(simple_10000_28_28 ${DIR_SRCS})
-target_link_libraries(simple_10000_28_28 MiniDNNLib)
+foreach(SOURCE_PATH ${SOURCE_FILES})
+
+    get_filename_component(EXECUTABLE_NAME ${SOURCE_PATH} NAME_WE)
+    add_executable(${EXECUTABLE_NAME} ${SOURCE_PATH})
+    target_link_libraries(EXECUTABLE_NAME MiniDNNLib)
+
+endforeach(SOURCE_PATH ${SOURCE_FILES})
+
+#add_executable(simple_1_28_28 ${DIR_SRCS})
+#target_link_libraries(simple_1_28_28 MiniDNNLib)
+#add_executable(simple_625_112_112 ${DIR_SRCS})
+#target_link_libraries(simple_625_112_112 MiniDNNLib)
+#add_executable(simple_2500_56_56 ${DIR_SRCS})
+#target_link_libraries(simple_2500_56_56 MiniDNNLib)
+#add_executable(simple_10000_28_28 ${DIR_SRCS})
+#target_link_libraries(simple_10000_28_28 MiniDNNLib)
 
