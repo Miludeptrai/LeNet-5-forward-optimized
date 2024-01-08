@@ -47,7 +47,7 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     //loop each channel 
     //if use constant skip_weight = in_channel_ith
     //and if not, the thread loads only each channel layer kernel, we need to set it 0
-    int i,j, ;//skip_weight
+    int i,j ;//skip_weight
     for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++){
         //read kernal for its channel 
 
