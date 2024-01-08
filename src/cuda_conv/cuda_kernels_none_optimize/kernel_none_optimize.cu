@@ -170,10 +170,10 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
 
     // dim3 blockSize_unroll(1024);
     // dim3 gridSize_unroll((height_out * width_out  * channel_in-1)/1024 + 1 ,1,batch_size);
-    dim3 blockSize_unroll(1024);
-    dim3 gridSize_unroll((width_kernel * height_kernel  * channel_in-1)/1024 + 1 ,1,batch_size);
     // dim3 blockSize_unroll(1024);
-    // dim3 gridSize_unroll((height_in * width_in  * channel_in-1)/1024 + 1 ,1,batch_size);
+    // dim3 gridSize_unroll((width_kernel * height_kernel  * channel_in-1)/1024 + 1 ,1,batch_size);
+    dim3 blockSize_unroll(1024);
+    dim3 gridSize_unroll((height_in * width_in  * channel_in-1)/1024 + 1 ,1,batch_size);
 
     dim3 blockSize_multi(32, 32);
     dim3 gridSize_multi(( channel_out-1)/blockSize_multi.y + 1,(height_out * width_out-1)/blockSize_multi.x + 1,batch_size);
@@ -199,7 +199,7 @@ __host__ void Kernel_none_optimize::cuda_conv_forward( int n_samples,  int chann
             
             //copy the data to correct stream mem 
             CHECK(cudaMemcpyAsync(device_input[stream], input_data + start_in, min(batch_size,n_samples-i) * channel_in * height_in * width_in * sizeof(float), cudaMemcpyHostToDevice, streams[stream]));
-            unroll_kernel_2<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
+            unroll_kernel_3<<<gridSize_unroll, blockSize_unroll, 0, streams[stream]>>>
                             (channel_in,  height_in,  width_in,  height_kernel, 
                              width_kernel,  height_out,  width_out, 
                             device_input[stream],  device_unroll_matrix);
