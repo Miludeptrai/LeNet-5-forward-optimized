@@ -3,7 +3,7 @@
 
 #define MAX_CONSTANT_SIZE 8192 
 
-//__constant__ float dc_weight[MAX_CONSTANT_SIZE];
+__constant__ float dc_weight[MAX_CONSTANT_SIZE];
 
 __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in, int height_kernel, 
                             int width_kernel, int height_out, int width_out, int channel_out,
@@ -30,12 +30,12 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
 
     //Here we decided to choose use constant or shared mem for weight
     float * temp_kernel ;
-    //int weight_lenght = channel_out * channel_in * height_kernel * width_kernel ; 
-    // if ( weight_lenght <= MAX_CONSTANT_SIZE) {
-    //     temp_kernel= dc_weight + out_channel_ith*(channel_in*width_kernel*height_kernel);//
-    // }else{
+    int weight_lenght = channel_out * channel_in * height_kernel * width_kernel ; 
+    if ( weight_lenght <= MAX_CONSTANT_SIZE) {
+        temp_kernel= dc_weight + out_channel_ith*(channel_in*width_kernel*height_kernel);//
+    }else{
         temp_kernel = (float*)&s_m[(TILE_WIDTH + height_kernel) * (TILE_WIDTH + width_kernel)];
-    //}
+    }
 
     //local 
     int r = threadIdx.y;
@@ -47,26 +47,21 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
     //loop each channel 
     //if use constant skip_weight = in_channel_ith
     //and if not, the thread loads only each channel layer kernel, we need to set it 0
-    int i,j ;//skip_weight
+    int i,j, skip_weight;
     for (int in_channel_ith = 0; in_channel_ith < channel_in; in_channel_ith++){
         //read kernal for its channel 
 
-        // if ( weight_lenght <= MAX_CONSTANT_SIZE) {
-        //     skip_weight = in_channel_ith;
-        // }else{
-        //     for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
-        //         for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
-        //             temp_kernel[i*width_kernel + j] = weight_data[
-        //                                                         out_channel_ith*(channel_in*width_kernel*height_kernel) +
-        //                                                         in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
-        //         }
-        //     }
-        //     skip_weight = 0;
-        // }
-        if(r< height_kernel && c < width_kernel){
-            temp_kernel[r*width_kernel + c] = weight_data[ out_channel_ith*(channel_in*width_kernel*height_kernel) +
-                                                        in_channel_ith*(width_kernel*height_kernel) + r*width_kernel + c];
-
+        if ( weight_lenght <= MAX_CONSTANT_SIZE) {
+            skip_weight = in_channel_ith;
+        }else{
+            for ( i = r ;i<height_kernel; i+= TILE_WIDTH){
+                for ( j = c ; j < width_kernel; j+= TILE_WIDTH){
+                    temp_kernel[i*width_kernel + j] = weight_data[
+                                                                out_channel_ith*(channel_in*width_kernel*height_kernel) +
+                                                                in_channel_ith*(width_kernel*height_kernel) + i*width_kernel + j];
+                }
+            }
+            skip_weight = 0;
         }
 
         //load data to shared mem 
@@ -84,8 +79,8 @@ __global__ void conv_forward_kernel_2(int channel_in,int height_in, int width_in
         for ( i = 0 ;i<height_kernel; i++){
             for ( j = 0 ; j < width_kernel; j++){
                 if (row_idx < height_out && col_idx < width_out) {
-                    accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[//skip_weight*(width_kernel*height_kernel) + 
-                                                                                        i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
+                    accumulator += temp_input[(i+r)*width_tiled + j+c] * temp_kernel[
+                                                                        skip_weight*(width_kernel*height_kernel) + i*width_kernel + j]; //temp_kernel[i*width_kernel + j];
                 }
             }
         }
@@ -118,13 +113,13 @@ __host__ void Kernel_simple_improved::cuda_conv_forward(int n_samples,  int chan
 
     //As we can see, we can use constant to store weight, but what if the size is too long? 
     //so, just check, and in our kernel, we must check again and decide which loctation we will use
-    // if (channel_out * channel_in * height_kernel * width_kernel <= MAX_CONSTANT_SIZE){
-    //     printf("Using constant!\n");
-    //     CHECK(cudaMemcpyToSymbol(dc_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
-    // }else{
+    if (channel_out * channel_in * height_kernel * width_kernel <= MAX_CONSTANT_SIZE){
+        printf("Using constant!\n");
+        CHECK(cudaMemcpyToSymbol(dc_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
+    }else{
         CHECK(cudaMalloc((void **)&device_weight, channel_out * channel_in * height_kernel * width_kernel * sizeof(float)));
         CHECK(cudaMemcpy(device_weight, weight_data, channel_out * channel_in * height_kernel * width_kernel * sizeof(float), cudaMemcpyHostToDevice));
-    //}
+    }
 
 
     //what is this? yes we have n_samples images, but in some case, we cannot load them all into GPU mem,
