@@ -60,7 +60,7 @@ __host__ void Kernel_simple::cuda_conv_forward(int n_samples,  int channel_in,  
     
     //what is this? yes we have n_samples images, but in some case, we cannot load them all into GPU mem,
     //we seperate them to each batch, an here I set it 32 
-    int batch_size = 32;
+    int batch_size = 128;
     // setting cuda streams
     int nStreams = 4;
     float **device_input = new float*[nStreams], **device_output = new float*[nStreams];
